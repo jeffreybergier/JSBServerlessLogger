@@ -32,7 +32,8 @@ extension XCGLogger.Level: Codable { }
 
 extension Event {
     
-    public init(details: LogDetails) {
+    public init(userID: String?, details: LogDetails) {
+        self.userID = userID
         self.logDetails = .init(details)
         self.errorDetails = (details.userInfo[Event.kErrorKey] as? NSError).map { .init($0) }
     }
