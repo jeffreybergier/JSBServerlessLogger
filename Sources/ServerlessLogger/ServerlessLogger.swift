@@ -31,6 +31,7 @@ import Foundation
 open class ServerlessLogger: XCGLogger {
     
     public struct Configuration {
+        public var identifier: String = "JSBServerlessLogger"
         public var userID: String?
         public var logLevel: XCGLogger.Level = .error
         public static let `default`: Configuration = .init()
@@ -38,16 +39,14 @@ open class ServerlessLogger: XCGLogger {
     
     public let configuration: Configuration
     
-    public init(identifier: String = "",
-                includeDefaultDestinations: Bool = true,
-                configuration: Configuration = .default)
+    public init(configuration: Configuration = .default,
+                includeDefaultDestinations: Bool = true)
     {
         self.configuration = configuration
-        if includeDefaultDestinations {
-            // TODO: Add my custom destination
-        }
-        super.init(identifier: identifier,
+        super.init(identifier: configuration.identifier,
                    includeDefaultDestinations: includeDefaultDestinations)
+        guard includeDefaultDestinations else { return }
+        self.add(destination: Destination(configuration: configuration))
     }
     
     open override func logln(_ level: Level = .debug,
@@ -67,5 +66,34 @@ open class ServerlessLogger: XCGLogger {
                     lineNumber: lineNumber,
                     userInfo: userInfo,
                     closure: closure)
+    }
+}
+
+extension ServerlessLogger {
+    open class Destination: DestinationProtocol {
+        public var owner: XCGLogger?
+        public var identifier: String
+        public var outputLevel: XCGLogger.Level
+        public var haveLoggedAppDetails: Bool = false
+        public var formatters: [LogFormatterProtocol]?
+        public var filters: [FilterProtocol]?
+        public var debugDescription: String { self.identifier }
+        
+        public let configuration: Configuration
+        init(configuration: Configuration) {
+            self.configuration = configuration
+            self.identifier = configuration.identifier + "Destination"
+            self.outputLevel = configuration.logLevel
+        }
+        
+        public func process(logDetails: LogDetails) {
+            //  TODO: Add writing to logmonitor
+        }
+        
+        public func processInternal(logDetails: LogDetails) { }
+        
+        public func isEnabledFor(level: XCGLogger.Level) -> Bool {
+            return level.rawValue >= self.outputLevel.rawValue
+        }
     }
 }
