@@ -28,7 +28,7 @@
 import XCGLogger
 import Foundation
 
-open class ServerlessLogger: XCGLogger {
+open class Logger: XCGLogger {
     
     public struct Configuration {
         public var identifier: String = "JSBServerlessLogger"
@@ -66,34 +66,5 @@ open class ServerlessLogger: XCGLogger {
                     lineNumber: lineNumber,
                     userInfo: userInfo,
                     closure: closure)
-    }
-}
-
-extension ServerlessLogger {
-    open class Destination: DestinationProtocol {
-        public var owner: XCGLogger?
-        public var identifier: String
-        public var outputLevel: XCGLogger.Level
-        public var haveLoggedAppDetails: Bool = false
-        public var formatters: [LogFormatterProtocol]?
-        public var filters: [FilterProtocol]?
-        public var debugDescription: String { self.identifier }
-        
-        public let configuration: Configuration
-        init(configuration: Configuration) {
-            self.configuration = configuration
-            self.identifier = configuration.identifier + "Destination"
-            self.outputLevel = configuration.logLevel
-        }
-        
-        public func process(logDetails: LogDetails) {
-            //  TODO: Add writing to logmonitor
-        }
-        
-        public func processInternal(logDetails: LogDetails) { }
-        
-        public func isEnabledFor(level: XCGLogger.Level) -> Bool {
-            return level.rawValue >= self.outputLevel.rawValue
-        }
     }
 }
