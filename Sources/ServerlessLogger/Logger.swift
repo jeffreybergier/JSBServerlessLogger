@@ -30,6 +30,7 @@ import Foundation
 
 open class Logger: XCGLogger {
     
+    // MARK: Configuration
     public struct Configuration {
         public var identifier: String = "JSBServerlessLogger"
         public var userID: String?
@@ -39,6 +40,7 @@ open class Logger: XCGLogger {
     
     public let configuration: Configuration
     
+    // MARK: INIT
     public init(configuration: Configuration = .default,
                 includeDefaultDestinations: Bool = true)
     {
@@ -49,6 +51,8 @@ open class Logger: XCGLogger {
         self.add(destination: Destination(configuration: configuration))
     }
     
+    // MARK: Custom
+    // Attempt to extract NSError objects from log closure
     open override func logln(_ level: Level = .debug,
                              functionName: String = #function,
                              fileName: String = #file,
@@ -56,6 +60,16 @@ open class Logger: XCGLogger {
                              userInfo: [String: Any] = [:],
                              closure: () -> Any?)
     {
+        guard level.rawValue >= self.configuration.logLevel.rawValue else {
+            super.logln(level,
+                        functionName: functionName,
+                        fileName: fileName,
+                        lineNumber: lineNumber,
+                        userInfo: userInfo,
+                        closure: closure)
+            return
+        }
+        
         var userInfo = userInfo
         if let closureResult = closure() as? NSError {
             userInfo[Event.kErrorKey] = closureResult

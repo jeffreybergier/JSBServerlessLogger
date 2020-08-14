@@ -29,6 +29,8 @@ import XCGLogger
 
 extension Logger {
     open class Destination: DestinationProtocol {
+        
+        // MARK: Protocol Requirements
         public var owner: XCGLogger?
         public var identifier: String
         public var outputLevel: XCGLogger.Level
@@ -37,20 +39,24 @@ extension Logger {
         public var filters: [FilterProtocol]?
         public var debugDescription: String { self.identifier }
         
+        // MARK: Configuration
         public let configuration: Configuration
-        init(configuration: Configuration) {
+        
+        // MARK: INIT
+        public init(configuration: Configuration) {
             self.configuration = configuration
             self.identifier = configuration.identifier + "Destination"
             self.outputLevel = configuration.logLevel
         }
         
-        public func process(logDetails: LogDetails) {
+        // MARK: Protocol Requirements
+        open func process(logDetails: LogDetails) {
             //  TODO: Add writing to logmonitor
         }
         
-        public func processInternal(logDetails: LogDetails) { }
+        open func processInternal(logDetails: LogDetails) { }
         
-        public func isEnabledFor(level: XCGLogger.Level) -> Bool {
+        open func isEnabledFor(level: XCGLogger.Level) -> Bool {
             return level.rawValue >= self.outputLevel.rawValue
         }
     }
