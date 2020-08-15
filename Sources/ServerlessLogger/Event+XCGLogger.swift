@@ -30,10 +30,10 @@ import Foundation
 
 extension XCGLogger.Level: Codable { }
 
-extension Event {
+extension Event: EventProtocol {
     
-    public init(userID: String?, details: LogDetails) {
-        self.userID = userID
+    public init(configuration: Logger.Configuration, details: LogDetails) {
+        self.userID = configuration.userID
         self.logDetails = .init(details)
         self.errorDetails = (details.userInfo[Event.kErrorKey] as? NSError).map { .init($0) }
     }

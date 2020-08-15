@@ -41,9 +41,7 @@ extension Logger {
         public let configuration: Configuration
         
         public init(configuration: Configuration) {
-            self.configuration = configuration
-            // TODO: Implement monitoring of inbox folder
-            
+            self.configuration = configuration            
         }
         
         open func presentedItemDidChange() {

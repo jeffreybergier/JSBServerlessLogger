@@ -28,8 +28,12 @@
 import XCGLogger
 import Foundation
 
+public protocol EventProtocol: Codable {
+    init(configuration: Logger.Configuration, details: LogDetails)
+}
+
 extension Logger {
-    open class Destination: DestinationProtocol {
+    open class Destination<T: EventProtocol>: DestinationProtocol {
         
         // MARK: Protocol Requirements
         public var owner: XCGLogger?
@@ -42,19 +46,19 @@ extension Logger {
         
         // MARK: Configuration
         public let configuration: Configuration
+        private let monitor: Monitor
         
         // MARK: INIT
         public init(configuration: Configuration) throws {
             self.configuration = configuration
+            self.monitor = Monitor(configuration: configuration)
             self.identifier = configuration.identifier + "Destination"
             self.outputLevel = configuration.logLevel
             try self.createDirectoryStructureIfNeeded()
+            NSFileCoordinator.addFilePresenter(self.monitor)
         }
         
         // MARK: Protocol Requirements
-        open func process(logDetails: LogDetails) {
-            //  TODO: Add writing to logmonitor
-        }
         
         open func processInternal(logDetails: LogDetails) { }
         
@@ -63,9 +67,14 @@ extension Logger {
         }
         
         // MARK: Write to Inbox
+
+        open func process(logDetails: LogDetails) {
+            let event = T(configuration: self.configuration, details: logDetails)
+            // TODO: Remove Try!
+            try! self.appendToInbox(event)
+        }
         
-        open func appendToInbox(_ event: Event) throws {
-            // TODO: Imeplement add to inbox
+        open func appendToInbox(_ event: T) throws {
             let jsonData = try JSONEncoder().encode(event)
             let url = self.configuration.inboxURL.appendingPathComponent(UUID().uuidString + ".event.json")
             let success = FileManager.default.createFile(atPath: url.path, contents: jsonData, attributes: nil)
