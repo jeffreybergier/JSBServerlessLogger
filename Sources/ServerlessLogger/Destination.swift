@@ -26,6 +26,7 @@
 //
 
 import XCGLogger
+import Foundation
 
 extension Logger {
     open class Destination: DestinationProtocol {
@@ -43,10 +44,11 @@ extension Logger {
         public let configuration: Configuration
         
         // MARK: INIT
-        public init(configuration: Configuration) {
+        public init(configuration: Configuration) throws {
             self.configuration = configuration
             self.identifier = configuration.identifier + "Destination"
             self.outputLevel = configuration.logLevel
+            try self.createDirectoryStructureIfNeeded()
         }
         
         // MARK: Protocol Requirements
@@ -59,5 +61,53 @@ extension Logger {
         open func isEnabledFor(level: XCGLogger.Level) -> Bool {
             return level.rawValue >= self.outputLevel.rawValue
         }
+        
+        // MARK: Write to Inbox
+        
+        open func appendToInbox(_ event: Event) throws {
+            // TODO: Imeplement add to inbox
+            let jsonData = try JSONEncoder().encode(event)
+            let url = self.configuration.inboxURL.appendingPathComponent(UUID().uuidString + ".event.json")
+            let success = FileManager.default.createFile(atPath: url.path, contents: jsonData, attributes: nil)
+            guard !success else { return }
+            throw Error.writeToInboxError
+        }
+        
+        // MARK: Destination Setup
+        
+        private func createDirectoryStructureIfNeeded() throws {
+            let fm = FileManager.default
+            let createDir: ((URL) throws -> Void) = { url in
+                var isDirectory = ObjCBool.init(false)
+                let exists = fm.fileExists(atPath: url.path, isDirectory: &isDirectory)
+                if exists && !isDirectory.boolValue {
+                    throw Error.destinationDirectorySetupError
+                }
+                if !exists {
+                    try fm.createDirectory(at: url, withIntermediateDirectories: true, attributes: nil)
+                }
+            }
+            try createDir(self.configuration.inboxURL)
+            try createDir(self.configuration.outboxURL)
+            try createDir(self.configuration.sentURL)
+        }
+    }
+}
+
+extension Logger.Configuration {
+    internal var inboxURL: URL {
+        return self.directoryBase.appendingPathComponent(self.directoryAppName, isDirectory: true)
+                                 .appendingPathComponent(self.directoryParentFolderName, isDirectory: true)
+                                 .appendingPathComponent("Inbox", isDirectory: true)
+    }
+    internal var outboxURL: URL {
+        return self.directoryBase.appendingPathComponent(self.directoryAppName, isDirectory: true)
+                                 .appendingPathComponent(self.directoryParentFolderName, isDirectory: true)
+                                 .appendingPathComponent("Outbox", isDirectory: true)
+    }
+    internal var sentURL: URL {
+        return self.directoryBase.appendingPathComponent(self.directoryAppName, isDirectory: true)
+                                 .appendingPathComponent(self.directoryParentFolderName, isDirectory: true)
+                                 .appendingPathComponent("Sent", isDirectory: true)
     }
 }

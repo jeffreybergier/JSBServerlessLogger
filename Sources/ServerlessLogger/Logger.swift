@@ -52,13 +52,13 @@ open class Logger: XCGLogger {
     
     // MARK: INIT
     public init(configuration: Configuration = .default,
-                includeDefaultDestinations: Bool = true)
+                includeDefaultDestinations: Bool = true) throws
     {
         self.configuration = configuration
         super.init(identifier: configuration.identifier,
                    includeDefaultDestinations: includeDefaultDestinations)
         guard includeDefaultDestinations else { return }
-        self.add(destination: Destination(configuration: configuration))
+        try self.add(destination: Destination(configuration: configuration))
     }
     
     // MARK: Custom

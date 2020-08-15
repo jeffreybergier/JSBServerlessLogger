@@ -30,49 +30,9 @@ import Foundation
 extension Logger {
     open class Monitor {
         public let configuration: Configuration
-        public init(configuration: Configuration) throws {
+        public init(configuration: Configuration) {
             self.configuration = configuration
-            try self.createDirectoryStructureIfNeeded()
             // TODO: Implement monitoring of inbox folder
         }
-        
-        private func createDirectoryStructureIfNeeded() throws {
-            let fm = FileManager.default
-            let createDir: ((URL) throws -> Void) = { url in
-                var isDirectory = ObjCBool.init(false)
-                let exists = fm.fileExists(atPath: url.path, isDirectory: &isDirectory)
-                if exists && !isDirectory.boolValue {
-                    throw Error.directorySetupError
-                }
-                if !exists {
-                    try fm.createDirectory(at: url, withIntermediateDirectories: true, attributes: nil)
-                }
-            }
-            try createDir(self.configuration.inboxURL)
-            try createDir(self.configuration.outboxURL)
-            try createDir(self.configuration.sentURL)
-        }
-        
-        open func appendToInbox(_ event: Event) throws {
-            // TODO: Imeplement add to inbox
-        }
-    }
-}
-
-extension Logger.Configuration {
-    fileprivate var inboxURL: URL {
-        return self.directoryBase.appendingPathComponent(self.directoryAppName, isDirectory: true)
-                                 .appendingPathComponent(self.directoryParentFolderName, isDirectory: true)
-                                 .appendingPathComponent("Inbox", isDirectory: true)
-    }
-    fileprivate var outboxURL: URL {
-        return self.directoryBase.appendingPathComponent(self.directoryAppName, isDirectory: true)
-                                 .appendingPathComponent(self.directoryParentFolderName, isDirectory: true)
-                                 .appendingPathComponent("Outbox", isDirectory: true)
-    }
-    fileprivate var sentURL: URL {
-        return self.directoryBase.appendingPathComponent(self.directoryAppName, isDirectory: true)
-                                 .appendingPathComponent(self.directoryParentFolderName, isDirectory: true)
-                                 .appendingPathComponent("Sent", isDirectory: true)
     }
 }

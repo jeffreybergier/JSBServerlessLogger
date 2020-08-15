@@ -36,6 +36,7 @@ extension Logger {
         public var errorUserInfo: [String : Any] { return [:] }
 
         // MARK: Errors
-        case directorySetupError = -1000
+        case destinationDirectorySetupError = -1000
+        case writeToInboxError = -1001
     }
 }
