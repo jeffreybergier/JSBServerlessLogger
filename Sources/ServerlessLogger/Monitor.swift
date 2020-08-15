@@ -28,11 +28,26 @@
 import Foundation
 
 extension Logger {
-    open class Monitor {
+    open class Monitor: NSObject, NSFilePresenter {
+        
+        open var presentedItemURL: URL? {
+            self.configuration.inboxURL
+        }
+        
+        open var presentedItemOperationQueue: OperationQueue {
+            return OperationQueue.main
+        }
+        
         public let configuration: Configuration
+        
         public init(configuration: Configuration) {
             self.configuration = configuration
             // TODO: Implement monitoring of inbox folder
+            
+        }
+        
+        open func presentedItemDidChange() {
+            // TODO: Read Inbox and make network requests.
         }
     }
 }
