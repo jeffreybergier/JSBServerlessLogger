@@ -41,11 +41,17 @@ extension Logger {
         public let configuration: Configuration
         
         public init(configuration: Configuration) {
-            self.configuration = configuration            
+            self.configuration = configuration
         }
         
         open func presentedItemDidChange() {
-            // TODO: Read Inbox and make network requests.
+            let fm = FileManager.default
+            let inboxLogURLs = try? fm.contentsOfDirectory(at: self.configuration.inboxURL,
+                                                           includingPropertiesForKeys: nil,
+                                                           options: [.skipsHiddenFiles,
+                                                                     .skipsPackageDescendants,
+                                                                     .skipsSubdirectoryDescendants])
+            // TODO: Make network requests with URLs
         }
     }
 }

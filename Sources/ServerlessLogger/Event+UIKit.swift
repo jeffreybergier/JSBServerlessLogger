@@ -27,6 +27,7 @@
 
 #if canImport(UIKit)
 import UIKit
+
 extension Event {
     public struct DeviceDetails: Codable {
         public let identifierForVendor = UIDevice.current.identifierForVendor
@@ -69,7 +70,9 @@ extension UIDevice.BatteryState {
         }
     }
 }
+
 #else
+
 extension Event {
     public struct DeviceDetails: Codable {
         public let storageRemaining: Int
@@ -88,4 +91,5 @@ extension Event {
         }
     }
 }
+
 #endif
