@@ -31,19 +31,40 @@ extension Logger  {
     public class APIClient {
         
         public let configuration: Configuration
-        public let session: URLSession
+        private let session: URLSession
         
         init(configuration: Configuration) {
-            self.configuration = configuration
-            let sessionConfiguration = URLSessionConfiguration.background(withIdentifier: configuration.identifier  + "APIClient")
+            let sessionConfiguration: URLSessionConfiguration
+            if true { // TODO: replace with background allowed
+                sessionConfiguration = URLSessionConfiguration.default
+            } else {
+                let sessionIdentifier = configuration.identifier  + "APIClient"
+                sessionConfiguration = URLSessionConfiguration.background(withIdentifier: sessionIdentifier)
+            }
             sessionConfiguration.allowsCellularAccess = true
             sessionConfiguration.isDiscretionary = true
             sessionConfiguration.shouldUseExtendedBackgroundIdleMode = true
             #if !os(macOS)
                 sessionConfiguration.sessionSendsLaunchEvents = true
             #endif
-            self.session = URLSession(configuration: sessionConfiguration)
+            
+            // Delegate() here is safe because the docs say that URLSession
+            // Holds a strong reference to its delegate until
+            // invalidateAndCancel() or finishTasksAndInvalidate() are called
+            self.session = URLSession(configuration: sessionConfiguration,
+                                      delegate: Delegate(),
+                                      delegateQueue: nil)
+            self.configuration = configuration
         }
+        
+        deinit {
+            self.session.finishTasksAndInvalidate()
+        }
+    }
+}
+
+extension Logger.APIClient {
+    fileprivate class Delegate: NSObject, URLSessionDelegate {
         
     }
 }
