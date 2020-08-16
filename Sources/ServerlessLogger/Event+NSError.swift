@@ -30,13 +30,13 @@ import Foundation
 extension Event {
     public struct ErrorDetails: Codable {
         
-        public let code: Int
-        public let domain: String
-        public let localizedDescription: String?
-        public let localizedRecoveryOptions: [String]?
-        public let localizedRecoverySuggestion: String?
-        public let localizedFailureReason: String?
-        public let remainingKeys: [String: String]
+        public var code: Int
+        public var domain: String
+        public var localizedDescription: String?
+        public var localizedRecoveryOptions: [String]?
+        public var localizedRecoverySuggestion: String?
+        public var localizedFailureReason: String?
+        public var remainingKeys: [String: String]
         
         public init(_ input: NSError) {
             // swiftlint:disable operator_usage_whitespace

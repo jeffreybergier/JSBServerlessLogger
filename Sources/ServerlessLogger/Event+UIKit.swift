@@ -75,11 +75,13 @@ extension UIDevice.BatteryState {
 
 extension Event {
     public struct DeviceDetails: Codable {
-        public let storageRemaining: Int
-        public let storageTotal: Int
-        public let memoryFree:  Int
-        public let memoryUsed:  Int
-        public let memoryTotal: Int
+        
+        public var storageRemaining: Int
+        public var storageTotal: Int
+        public var memoryFree:  Int
+        public var memoryUsed:  Int
+        public var memoryTotal: Int
+        
         public init() {
             let disk = diskResourceValues
             self.storageRemaining = (disk?.volumeAvailableCapacity ?? -1000000) / 1000000

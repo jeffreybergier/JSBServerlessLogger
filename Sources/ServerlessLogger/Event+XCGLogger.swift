@@ -39,13 +39,15 @@ extension Event: EventProtocol {
     }
     
     public struct JSBLogDetails: Codable {
-        let level: XCGLogger.Level
-        let date: Date
-        let message: String
-        let functionName: String
-        let fileName: String
-        let lineNumber: Int
-        init(_ input: LogDetails) {
+        
+        public var level: XCGLogger.Level
+        public var date: Date
+        public var message: String
+        public var functionName: String
+        public var fileName: String
+        public var lineNumber: Int
+        
+        public init(_ input: LogDetails) {
             // swiftlint:disable operator_usage_whitespace
             self.level        = input.level
             self.date         = input.date

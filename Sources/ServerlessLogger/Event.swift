@@ -31,9 +31,9 @@ public struct Event: Codable {
     
     public static let kErrorKey = "JSBServerlessLoggerErrorKey"
     
-    public let userID: String?
-    public let incident: String = String(UInt64.random(in: 10000000000000000000..<UInt64.max))
-    public let logDetails: JSBLogDetails
-    public let deviceDetails = DeviceDetails()
-    public let errorDetails: ErrorDetails?
+    public var userID: String?
+    public var incident: String = String(UInt64.random(in: 10000000000000000000..<UInt64.max))
+    public var logDetails: JSBLogDetails
+    public var deviceDetails = DeviceDetails()
+    public var errorDetails: ErrorDetails?
 }
