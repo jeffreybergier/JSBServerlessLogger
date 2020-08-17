@@ -69,7 +69,7 @@ extension Logger  {
                 var components = self.configuration.endpointURL
                 if #available(iOS 13.0, OSX 10.15, watchOS 6.0, tvOS 13.0, *),
                    let secureConfig = self.configuration as? ServerlessLoggerHMACConfigurationProtocol,
-                   let data = try? Data(contentsOf: onDiskURL)
+                   let data = FileManager.default.contents(atPath: onDiskURL.path)
                 {
                     let signature = data.hmacHash(with: secureConfig.hmacKey)
                     components.queryItems?.append(URLQueryItem(name: "mac", value: signature))

@@ -76,8 +76,11 @@ extension Logger {
         
         open func appendToInbox(_ event: T) throws {
             let jsonData = try JSONEncoder().encode(event)
-            let url = self.configuration.storageLocation.inboxURL.appendingPathComponent(UUID().uuidString + ".event.json")
-            let success = FileManager.default.createFile(atPath: url.path, contents: jsonData, attributes: nil)
+            let destURL = self.configuration.storageLocation.inboxURL
+                              .appendingPathComponent(UUID().uuidString + ".event.json")
+            let success = FileManager.default.createFile(atPath: destURL.path,
+                                                         contents: jsonData,
+                                                         attributes: nil)
             guard !success else { return }
             throw Error.writeToInboxError
         }
