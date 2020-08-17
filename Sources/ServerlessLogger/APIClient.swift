@@ -28,16 +28,16 @@
 import Foundation
 
 public protocol ServerlessLoggerAPIClientDelegate: class {
-    func didFinishSending(events: [URL])
+    func didSend(event: URL)
+    func didFailToSend(event: URL)
 }
 
 extension Logger  {
     public class APIClient {
         
         public let configuration: ServerlessLoggerConfigurationProtocol
-        public weak var delegate: ServerlessLoggerAPIClientDelegate?
         private let session: URLSession
-        private let sessionDelegate: Delegate
+        private let sessionDelegate: SessionDelegate
         
         init(configuration: ServerlessLoggerConfigurationProtocol) {
             let sessionConfiguration: URLSessionConfiguration
@@ -54,7 +54,7 @@ extension Logger  {
             sessionConfiguration.isDiscretionary = true
             sessionConfiguration.shouldUseExtendedBackgroundIdleMode = true
             
-            let delegate = Delegate()
+            let delegate = SessionDelegate(delegate: nil) // TODO: Fix this
             self.session = URLSession(configuration: sessionConfiguration,
                                       delegate: delegate,
                                       delegateQueue: nil)
@@ -75,9 +75,7 @@ extension Logger  {
                         components.queryItems?.append(URLQueryItem(name: "mac", value: signature))
                     }
                 } else {
-                    #if DEBUG
-                    NSLog("JSBServerlessLogger: Sending insecure payload")
-                    #endif
+                    NSDebugLog("JSBServerlessLogger: Sending insecure payload")
                 }
                 let remoteURL = components.url!
                 var request = URLRequest(url: remoteURL)
@@ -95,17 +93,37 @@ extension Logger  {
 }
 
 extension Logger.APIClient {
-    fileprivate class Delegate: NSObject, URLSessionTaskDelegate {
+    fileprivate class SessionDelegate: NSObject, URLSessionTaskDelegate {
         
         /// Key: RemoteURL, Value: OnDiskURL
         internal var inFlight = Dictionary<URL, URL>()
+        internal weak var delegate: ServerlessLoggerAPIClientDelegate?
+        
+        internal init(delegate: ServerlessLoggerAPIClientDelegate?) {
+            self.delegate = delegate
+            super.init()
+        }
         
         #if !os(macOS)
         public func urlSessionDidFinishEvents(forBackgroundURLSession session: URLSession) { }
         #endif
         
         public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
-            // TODO: Implement checking off the tasks as they finish
+            guard
+                let remoteURL = task.originalRequest?.url,
+                let onDiskURL = self.inFlight.removeValue(forKey: remoteURL)
+            else { return }
+            if let error = error {
+                NSDebugLog("JSBServerlessError: didFailtToSend: \(onDiskURL), error: \(error)")
+                self.delegate?.didFailToSend(event: onDiskURL)
+                return
+            }
+            guard let response = task.response as? HTTPURLResponse, response.statusCode == 200 else {
+                NSDebugLog("JSBServerlessError: didFailtToSend: \(onDiskURL), response: \(String(describing: task.response))")
+                self.delegate?.didFailToSend(event: onDiskURL)
+                return
+            }
+            self.delegate?.didSend(event: onDiskURL)
         }
     }
 }
