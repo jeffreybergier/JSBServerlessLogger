@@ -63,28 +63,28 @@ extension Logger  {
         }
         
         func send(events: [URL]) {
-            var tasks = [URLSessionTask]()
-            tasks.reserveCapacity(events.count)
-            for url in events {
-                    var components = self.configuration.endpointURL
-                    if #available(iOS 13.0, OSX 10.15, watchOS 6.0, tvOS 13.0, *),
-                       let secureConfig = self.configuration as? ServerlessLoggerHMACConfigurationProtocol
-                    {
-                        // release the Data object as soon as possible in the loop
-                        autoreleasepool {
-                            let data = try! Data(contentsOf: url)
-                            let signature = data.hmacHash(with: secureConfig.hmacKey)
-                            components.queryItems?.append(URLQueryItem(name: "mac", value: signature))
-                        }
-                    } else {
-                        // Log in DEBUG mode that we are sending an insecure payload
-                        assert({ NSLog("JSBServerlessLogger: Sending insecure payload"); return true; }())
+            for diskURL in events {
+                var components = self.configuration.endpointURL
+                if #available(iOS 13.0, OSX 10.15, watchOS 6.0, tvOS 13.0, *),
+                   let secureConfig = self.configuration as? ServerlessLoggerHMACConfigurationProtocol
+                {
+                    // release the Data object as soon as possible in the loop
+                    autoreleasepool {
+                        let data = try! Data(contentsOf: diskURL)
+                        let signature = data.hmacHash(with: secureConfig.hmacKey)
+                        components.queryItems?.append(URLQueryItem(name: "mac", value: signature))
                     }
-                    var request = URLRequest(url: components.url!)
-                    request.httpMethod = "PUT"
-                    let task = self.session.uploadTask(with: request, fromFile: url)
-                    tasks.append(task)
-                    task.resume()
+                } else {
+                    #if DEBUG
+                    NSLog("JSBServerlessLogger: Sending insecure payload")
+                    #endif
+                }
+                let remoteURL = components.url!
+                var request = URLRequest(url: remoteURL)
+                request.httpMethod = "PUT"
+                let task = self.session.uploadTask(with: request, fromFile: diskURL)
+                self.sessionDelegate.inFlight[remoteURL] = diskURL
+                task.resume()
             }
         }
         
@@ -97,12 +97,15 @@ extension Logger  {
 extension Logger.APIClient {
     fileprivate class Delegate: NSObject, URLSessionTaskDelegate {
         
+        /// Key: RemoteURL, Value: OnDiskURL
+        internal var inFlight = Dictionary<URL, URL>()
+        
         #if !os(macOS)
         public func urlSessionDidFinishEvents(forBackgroundURLSession session: URLSession) { }
         #endif
         
         public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
-            
+            // TODO: Implement checking off the tasks as they finish
         }
     }
 }
