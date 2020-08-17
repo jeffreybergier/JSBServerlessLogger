@@ -33,9 +33,9 @@ extension XCGLogger.Level: Codable { }
 extension Event: ServerlessLoggerEventProtocol {
     
     public init(configuration: ServerlessLoggerConfigurationProtocol, details: LogDetails) {
-        self.userID = configuration.userID
         self.logDetails = .init(details)
         self.errorDetails = (details.userInfo[Event.kErrorKey] as? NSError).map { .init($0) }
+        self.extraDetails = configuration.extraDetails
     }
     
     public struct JSBLogDetails: Codable {

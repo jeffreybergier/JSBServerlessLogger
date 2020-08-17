@@ -32,8 +32,8 @@ import Foundation
 public protocol ServerlessLoggerConfigurationProtocol {
     /// Identifier used for XCGLogger and Destination
     var identifier: String { get }
-    /// UserID is included with log payload. If you have a way to identify your users, populate this field
-    var userID: String? { get }
+    /// Extra details are added to each event. Use this to store UserID or any other useful iniformation
+    var extraDetails: Event.ExtraDetails? { get }
     /// Log levels equal to this or higher will be logged via this system
     var logLevel: XCGLogger.Level { get }
     /// Specifies where logs are stored during the network request
@@ -48,34 +48,38 @@ public protocol ServerlessLoggerHMACConfigurationProtocol: ServerlessLoggerConfi
 }
 
 extension Logger {
-    
     /// Folder structure created is:
-    /// `file:///{ baseDirectory }/{ appName }/{ parentDirectory }/Inbox`
-    /// `file:///{ baseDirectory }/{ appName }/{ parentDirectory }/Outbox`
-    /// `file:///{ baseDirectory }/{ appName }/{ parentDirectory }/Sent`
+    /// `{ baseDirectory }/{ appName }/{ parentDirectory }/Inbox`
+    /// `{ baseDirectory }/{ appName }/{ parentDirectory }/Outbox`
+    /// `{ baseDirectory }/{ appName }/{ parentDirectory }/Sent`
     public struct StorageLocation {
-        public var baseDirectory: URL
-        public var appName: String
-        public var parentDirectory: String
+        /// Default is Application Support Directory
+        public var baseDirectory: URL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        /// Default is Main Bundle Identifier
+        public var appName: String = Bundle.main.bundleIdentifier ?? "JSBServerlessLogger"
+        /// Default is `ServerlessLogger`
+        public var parentDirectory: String = "ServerlessLogger"
+    }
+}
+
+extension Logger {
+    public struct DefaultInsecureConfiguration: ServerlessLoggerConfigurationProtocol {
+        public var endpointURL: URLComponents
+        public var extraDetails: Event.ExtraDetails?
+
+        public var identifier: String = "JSBServerlessLogger"
+        public var logLevel: XCGLogger.Level = .error
+        public var storageLocation = Logger.StorageLocation()
     }
     
-    // MARK: Configuration
-    public struct Configuration2 {
-        /// Identifier used for XCGLogger and Destination
-        public var identifier: String = "JSBServerlessLogger"
-        /// UserID is included with log payload. If you have a way to identify your users, populate this field
-        public var userID: String?
-        /// Log levels equal to this or higher will be logged via this system
-        public var logLevel: XCGLogger.Level = .error
-        /// Default is User's Application Support Directory
-        public var directoryBase = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        /// Default is main bundle identifier
-        public var directoryAppName: String = Bundle.main.bundleIdentifier ?? "JSBServerlessLogger"
-        /// Parent structure for logger. Inside this folder, Inbox, Outbox, and Sent folders will be created
-        public var directoryParentFolderName: String = "ServerlessLogger"
-        /// URL that the API Client uses to send PUT request
-        public var endpointURL: URLComponents = URLComponents(string: "")! // TODO: Fix this
+    @available(iOS 13.0, OSX 10.15, watchOS 6.0, tvOS 13.0, *)
+    public struct DefaultSecureConfiguration: ServerlessLoggerHMACConfigurationProtocol {
+        public var endpointURL: URLComponents
+        public var extraDetails: Event.ExtraDetails?
+        public var hmacKey: SymmetricKey
         
-        public static let `default`: Configuration2 = .init()
+        public var identifier: String = "JSBServerlessLogger"
+        public var logLevel: XCGLogger.Level = .error
+        public var storageLocation = Logger.StorageLocation()
     }
 }

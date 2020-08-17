@@ -31,9 +31,16 @@ public struct Event: Codable {
     
     public static let kErrorKey = "JSBServerlessLoggerErrorKey"
     
-    public var userID: String?
     public var incident: String = String(UInt64.random(in: 10000000000000000000..<UInt64.max))
     public var logDetails: JSBLogDetails
     public var deviceDetails = DeviceDetails()
     public var errorDetails: ErrorDetails?
+    public var extraDetails: ExtraDetails?
+}
+
+extension Event {
+    public struct ExtraDetails: Codable {
+        var userID: String?
+        var userInfo: [String: String]? // TODO: Replace value type with anything codable
+    }
 }
