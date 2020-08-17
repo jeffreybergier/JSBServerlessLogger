@@ -28,12 +28,12 @@
 import XCGLogger
 import Foundation
 
-public protocol EventProtocol: Codable {
-    init(configuration: Logger.Configuration, details: LogDetails)
+public protocol ServerlessLoggerEventProtocol: Codable {
+    init(configuration: ServerlessLoggerConfigurationProtocol, details: LogDetails)
 }
 
 extension Logger {
-    open class Destination<T: EventProtocol>: DestinationProtocol {
+    open class Destination<T: ServerlessLoggerEventProtocol>: DestinationProtocol {
         
         // MARK: Protocol Requirements
         public var owner: XCGLogger?
@@ -45,11 +45,11 @@ extension Logger {
         public var debugDescription: String { self.identifier }
         
         // MARK: Configuration
-        public let configuration: Configuration
+        public let configuration: ServerlessLoggerConfigurationProtocol
         private let monitor: Monitor
         
         // MARK: INIT
-        public init(configuration: Configuration) throws {
+        public init(configuration: ServerlessLoggerConfigurationProtocol) throws {
             self.configuration = configuration
             self.monitor = Monitor(configuration: configuration)
             self.identifier = configuration.identifier + "Destination"
@@ -76,7 +76,7 @@ extension Logger {
         
         open func appendToInbox(_ event: T) throws {
             let jsonData = try JSONEncoder().encode(event)
-            let url = self.configuration.inboxURL.appendingPathComponent(UUID().uuidString + ".event.json")
+            let url = self.configuration.storageLocation.inboxURL.appendingPathComponent(UUID().uuidString + ".event.json")
             let success = FileManager.default.createFile(atPath: url.path, contents: jsonData, attributes: nil)
             guard !success else { return }
             throw Error.writeToInboxError
@@ -96,27 +96,25 @@ extension Logger {
                     try fm.createDirectory(at: url, withIntermediateDirectories: true, attributes: nil)
                 }
             }
-            try createDir(self.configuration.inboxURL)
-            try createDir(self.configuration.outboxURL)
-            try createDir(self.configuration.sentURL)
+            try createDir(self.configuration.storageLocation.inboxURL)
+            try createDir(self.configuration.storageLocation.outboxURL)
+            try createDir(self.configuration.storageLocation.sentURL)
         }
     }
 }
 
-extension Logger.Configuration {
+extension Logger.StorageLocation {
+    private var storageLocationURL: URL {
+        return self.baseDirectory.appendingPathComponent(self.appName, isDirectory: true)
+                                 .appendingPathComponent(self.parentDirectory, isDirectory: true)
+    }
     internal var inboxURL: URL {
-        return self.directoryBase.appendingPathComponent(self.directoryAppName, isDirectory: true)
-                                 .appendingPathComponent(self.directoryParentFolderName, isDirectory: true)
-                                 .appendingPathComponent("Inbox", isDirectory: true)
+        return storageLocationURL.appendingPathComponent("Inbox", isDirectory: true)
     }
     internal var outboxURL: URL {
-        return self.directoryBase.appendingPathComponent(self.directoryAppName, isDirectory: true)
-                                 .appendingPathComponent(self.directoryParentFolderName, isDirectory: true)
-                                 .appendingPathComponent("Outbox", isDirectory: true)
+        return storageLocationURL.appendingPathComponent("Outbox", isDirectory: true)
     }
     internal var sentURL: URL {
-        return self.directoryBase.appendingPathComponent(self.directoryAppName, isDirectory: true)
-                                 .appendingPathComponent(self.directoryParentFolderName, isDirectory: true)
-                                 .appendingPathComponent("Sent", isDirectory: true)
+        return storageLocationURL.appendingPathComponent("Sent", isDirectory: true)
     }
 }

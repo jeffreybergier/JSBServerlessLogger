@@ -30,30 +30,10 @@ import Foundation
 
 open class Logger: XCGLogger {
     
-    // MARK: Configuration
-    public struct Configuration {
-        /// Identifier used for XCGLogger and Destination
-        public var identifier: String = "JSBServerlessLogger"
-        /// UserID is included with log payload. If you have a way to identify your users, populate this field
-        public var userID: String?
-        /// Log levels equal to this or higher will be logged via this system
-        public var logLevel: XCGLogger.Level = .error
-        /// Default is User's Application Support Directory
-        public var directoryBase = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        /// Default is main bundle identifier
-        public var directoryAppName: String = Bundle.main.bundleIdentifier ?? "JSBServerlessLogger"
-        /// Parent structure for logger. Inside this folder, Inbox, Outbox, and Sent folders will be created
-        public var directoryParentFolderName: String = "ServerlessLogger"
-        /// URL that the API Client uses to send PUT request
-        public var endpointURL: URLComponents = URLComponents(string: "")! // TODO: Fix this
-        
-        public static let `default`: Configuration = .init()
-    }
-    
-    public let configuration: Configuration
+    public let configuration: ServerlessLoggerConfigurationProtocol
     
     // MARK: INIT
-    public init(configuration: Configuration = .default,
+    public init(configuration: ServerlessLoggerConfigurationProtocol,
                 includeDefaultXCGDestinations: Bool = true,
                 includeDefaultJSBDestinations: Bool = true) throws
     {

@@ -31,22 +31,22 @@ extension Logger {
     open class Monitor: NSObject, NSFilePresenter {
         
         open var presentedItemURL: URL? {
-            self.configuration.inboxURL
+            self.configuration.storageLocation.inboxURL
         }
         
         open var presentedItemOperationQueue: OperationQueue {
             return OperationQueue.main
         }
         
-        public let configuration: Configuration
+        public let configuration: ServerlessLoggerConfigurationProtocol
         
-        public init(configuration: Configuration) {
+        public init(configuration: ServerlessLoggerConfigurationProtocol) {
             self.configuration = configuration
         }
         
         open func presentedItemDidChange() {
             let fm = FileManager.default
-            let inboxLogURLs = try? fm.contentsOfDirectory(at: self.configuration.inboxURL,
+            let inboxLogURLs = try? fm.contentsOfDirectory(at: self.configuration.storageLocation.inboxURL,
                                                            includingPropertiesForKeys: nil,
                                                            options: [.skipsHiddenFiles,
                                                                      .skipsPackageDescendants,

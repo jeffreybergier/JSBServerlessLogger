@@ -27,19 +27,19 @@
 
 import Foundation
 
-public protocol LoggerAPIClientDelegate: class {
+public protocol ServerlessLoggerAPIClientDelegate: class {
     func didFinishSending(events: [URL])
 }
 
 extension Logger  {
     public class APIClient {
         
-        public let configuration: Configuration
-        public weak var delegate: LoggerAPIClientDelegate?
+        public let configuration: ServerlessLoggerConfigurationProtocol
+        public weak var delegate: ServerlessLoggerAPIClientDelegate?
         private let session: URLSession
         private let sessionDelegate: Delegate
         
-        init(configuration: Configuration) {
+        init(configuration: ServerlessLoggerConfigurationProtocol) {
             let sessionConfiguration: URLSessionConfiguration
             if true { // TODO: replace with background allowed
                 sessionConfiguration = URLSessionConfiguration.default
