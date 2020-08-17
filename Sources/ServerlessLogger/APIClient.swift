@@ -36,7 +36,7 @@ extension Logger  {
     public class APIClient {
         
         public let configuration: ServerlessLoggerConfigurationProtocol
-        private let session: URLSession
+        private let session: URLSessionProtocol
         private let sessionDelegate: SessionDelegate
         
         init(configuration: ServerlessLoggerConfigurationProtocol,
@@ -57,9 +57,9 @@ extension Logger  {
             sessionConfiguration.shouldUseExtendedBackgroundIdleMode = true
             
             let sessionDelegate = SessionDelegate(delegate: delegate)
-            self.session = URLSession(configuration: sessionConfiguration,
-                                      delegate: sessionDelegate,
-                                      delegateQueue: nil)
+            self.session = URLSession.new(configuration: sessionConfiguration,
+                                          delegate: sessionDelegate,
+                                          delegateQueue: nil)
             self.configuration = configuration
             self.sessionDelegate = sessionDelegate
         }
@@ -107,7 +107,7 @@ extension Logger.APIClient {
         public func urlSessionDidFinishEvents(forBackgroundURLSession session: URLSession) { }
         #endif
         
-        public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        public func urlSession(_: Foundation.URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
             guard
                 let remoteURL = task.originalRequest?.url,
                 let onDiskURL = self.inFlight.removeValue(forKey: remoteURL)
