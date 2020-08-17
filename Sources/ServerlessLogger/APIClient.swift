@@ -28,8 +28,8 @@
 import Foundation
 
 public protocol ServerlessLoggerAPIClientDelegate: class {
-    func didSend(event: URL)
-    func didFailToSend(event: URL)
+    func didSend(payload: URL)
+    func didFailToSend(payload: URL)
 }
 
 extension Logger  {
@@ -64,26 +64,24 @@ extension Logger  {
             self.sessionDelegate = sessionDelegate
         }
         
-        func send(events: [URL]) {
-            for diskURL in events {
-                autoreleasepool { // release the Data object as soon as possible in the loop
-                    var components = self.configuration.endpointURL
-                    if #available(iOS 13.0, OSX 10.15, watchOS 6.0, tvOS 13.0, *),
-                       let secureConfig = self.configuration as? ServerlessLoggerHMACConfigurationProtocol,
-                       let data = try? Data(contentsOf: diskURL)
-                    {
-                        let signature = data.hmacHash(with: secureConfig.hmacKey)
-                        components.queryItems?.append(URLQueryItem(name: "mac", value: signature))
-                    } else {
-                        NSDebugLog("JSBServerlessLogger: Sending payload without signature")
-                    }
-                    let remoteURL = components.url!
-                    var request = URLRequest(url: remoteURL)
-                    request.httpMethod = "PUT"
-                    let task = self.session.uploadTask(with: request, fromFile: diskURL)
-                    self.sessionDelegate.inFlight[remoteURL] = diskURL
-                    task.resume()
+        func send(payload onDiskURL: URL) {
+            autoreleasepool {
+                var components = self.configuration.endpointURL
+                if #available(iOS 13.0, OSX 10.15, watchOS 6.0, tvOS 13.0, *),
+                   let secureConfig = self.configuration as? ServerlessLoggerHMACConfigurationProtocol,
+                   let data = try? Data(contentsOf: onDiskURL)
+                {
+                    let signature = data.hmacHash(with: secureConfig.hmacKey)
+                    components.queryItems?.append(URLQueryItem(name: "mac", value: signature))
+                } else {
+                    NSDebugLog("JSBServerlessLogger: Sending payload without signature")
                 }
+                let remoteURL = components.url!
+                var request = URLRequest(url: remoteURL)
+                request.httpMethod = "PUT"
+                let task = self.session.uploadTask(with: request, fromFile: onDiskURL)
+                self.sessionDelegate.inFlight[remoteURL] = onDiskURL
+                task.resume()
             }
         }
         
@@ -116,15 +114,15 @@ extension Logger.APIClient {
             else { return }
             if let error = error {
                 NSDebugLog("JSBServerlessError: didFailToSend: \(onDiskURL), error: \(error)")
-                self.delegate?.didFailToSend(event: onDiskURL)
+                self.delegate?.didFailToSend(payload: onDiskURL)
                 return
             }
             guard let response = task.response as? HTTPURLResponse, response.statusCode == 200 else {
                 NSDebugLog("JSBServerlessError: didFailToSend: \(onDiskURL), response: \(String(describing: task.response))")
-                self.delegate?.didFailToSend(event: onDiskURL)
+                self.delegate?.didFailToSend(payload: onDiskURL)
                 return
             }
-            self.delegate?.didSend(event: onDiskURL)
+            self.delegate?.didSend(payload: onDiskURL)
         }
     }
 }

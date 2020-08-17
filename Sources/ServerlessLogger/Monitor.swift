@@ -51,20 +51,31 @@ extension Logger {
 extension Logger.Monitor: NSFilePresenter {
     open func presentedItemDidChange() {
         let fm = FileManager.default
-        let inboxLogURLs = try? fm.contentsOfDirectory(at: self.configuration.storageLocation.inboxURL,
-                                                       includingPropertiesForKeys: nil,
-                                                       options: [.skipsHiddenFiles,
-                                                                 .skipsPackageDescendants,
-                                                                 .skipsSubdirectoryDescendants])
-        // TODO: Make network requests with URLs
+        do {
+            let inboxLogURLs = try fm.contentsOfDirectory(at: self.configuration.storageLocation.inboxURL,
+                                                          includingPropertiesForKeys: nil,
+                                                          options: [.skipsHiddenFiles,
+                                                                    .skipsPackageDescendants,
+                                                                    .skipsSubdirectoryDescendants])
+            // TODO: Make network requests with URLs
+            for sourceURL in inboxLogURLs {
+                let destURL = self.configuration.storageLocation.outboxURL
+                                  .appendingPathComponent(sourceURL.lastPathComponent)
+                try fm.moveItem(at: sourceURL, to: destURL)
+                self.apiClient.send(payload: destURL)
+            }
+        } catch {
+            NSDebugLog("JSBServerlessLogger: Monitor.presentedItemDidChange: Failed to move file: \(error)")
+        }
     }
 }
 
 extension Logger.Monitor: ServerlessLoggerAPIClientDelegate {
-    open func didSend(event sourceURL: URL) {
+    open func didSend(payload sourceURL: URL) {
         _presentedItemOperationQueue.async {
             do {
                 let destURL = self.configuration.storageLocation.sentURL
+                                  .appendingPathComponent(sourceURL.lastPathComponent)
                 try FileManager.default.moveItem(at: sourceURL, to: destURL)
             } catch {
                 NSDebugLog("JSBServerlessLogger: Monitor.didSendURL: \(sourceURL): Failed to move item back to sentbox: \(error)")
@@ -72,10 +83,11 @@ extension Logger.Monitor: ServerlessLoggerAPIClientDelegate {
         }
     }
     
-    open func didFailToSend(event sourceURL: URL) {
+    open func didFailToSend(payload sourceURL: URL) {
         _presentedItemOperationQueue.async {
             do {
                 let destURL = self.configuration.storageLocation.inboxURL
+                                  .appendingPathComponent(sourceURL.lastPathComponent)
                 try FileManager.default.moveItem(at: sourceURL, to: destURL)
             } catch {
                 NSDebugLog("JSBServerlessLogger: Monitor.didFailToSendURL: \(sourceURL): Failed to move item back to inbox: \(error)")
