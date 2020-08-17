@@ -28,30 +28,58 @@
 import Foundation
 
 extension Logger {
-    open class Monitor: NSObject, NSFilePresenter {
+    open class Monitor: NSObject {
         
-        open var presentedItemURL: URL? {
-            self.configuration.storageLocation.inboxURL
-        }
-        
-        open var presentedItemOperationQueue: OperationQueue {
-            return OperationQueue.main
-        }
+        open var presentedItemURL: URL? { self.configuration.storageLocation.inboxURL }
+        open lazy var presentedItemOperationQueue: OperationQueue = {
+            let q = OperationQueue()
+            q.underlyingQueue = _presentedItemOperationQueue
+            return q
+        }()
         
         public let configuration: ServerlessLoggerConfigurationProtocol
+        private lazy var apiClient = APIClient(configuration: self.configuration, delegate: self)
+        private lazy var _presentedItemOperationQueue = DispatchQueue(label: configuration.identifier  + "Monitor",
+                                                                      qos: .utility)
         
         public init(configuration: ServerlessLoggerConfigurationProtocol) {
             self.configuration = configuration
         }
-        
-        open func presentedItemDidChange() {
-            let fm = FileManager.default
-            let inboxLogURLs = try? fm.contentsOfDirectory(at: self.configuration.storageLocation.inboxURL,
-                                                           includingPropertiesForKeys: nil,
-                                                           options: [.skipsHiddenFiles,
-                                                                     .skipsPackageDescendants,
-                                                                     .skipsSubdirectoryDescendants])
-            // TODO: Make network requests with URLs
+    }
+}
+
+extension Logger.Monitor: NSFilePresenter {
+    open func presentedItemDidChange() {
+        let fm = FileManager.default
+        let inboxLogURLs = try? fm.contentsOfDirectory(at: self.configuration.storageLocation.inboxURL,
+                                                       includingPropertiesForKeys: nil,
+                                                       options: [.skipsHiddenFiles,
+                                                                 .skipsPackageDescendants,
+                                                                 .skipsSubdirectoryDescendants])
+        // TODO: Make network requests with URLs
+    }
+}
+
+extension Logger.Monitor: ServerlessLoggerAPIClientDelegate {
+    open func didSend(event sourceURL: URL) {
+        _presentedItemOperationQueue.async {
+            do {
+                let destURL = self.configuration.storageLocation.sentURL
+                try FileManager.default.moveItem(at: sourceURL, to: destURL)
+            } catch {
+                NSDebugLog("JSBServerlessLogger: Monitor.didSendURL: \(sourceURL): Failed to move item back to sentbox: \(error)")
+            }
+        }
+    }
+    
+    open func didFailToSend(event sourceURL: URL) {
+        _presentedItemOperationQueue.async {
+            do {
+                let destURL = self.configuration.storageLocation.inboxURL
+                try FileManager.default.moveItem(at: sourceURL, to: destURL)
+            } catch {
+                NSDebugLog("JSBServerlessLogger: Monitor.didFailToSendURL: \(sourceURL): Failed to move item back to inbox: \(error)")
+            }
         }
     }
 }

@@ -39,7 +39,9 @@ extension Logger  {
         private let session: URLSession
         private let sessionDelegate: SessionDelegate
         
-        init(configuration: ServerlessLoggerConfigurationProtocol) {
+        init(configuration: ServerlessLoggerConfigurationProtocol,
+             delegate: ServerlessLoggerAPIClientDelegate?)
+        {
             let sessionConfiguration: URLSessionConfiguration
             if true { // TODO: replace with background allowed
                 sessionConfiguration = URLSessionConfiguration.default
@@ -54,12 +56,12 @@ extension Logger  {
             sessionConfiguration.isDiscretionary = true
             sessionConfiguration.shouldUseExtendedBackgroundIdleMode = true
             
-            let delegate = SessionDelegate(delegate: nil) // TODO: Fix this
+            let sessionDelegate = SessionDelegate(delegate: delegate)
             self.session = URLSession(configuration: sessionConfiguration,
-                                      delegate: delegate,
+                                      delegate: sessionDelegate,
                                       delegateQueue: nil)
             self.configuration = configuration
-            self.sessionDelegate = delegate
+            self.sessionDelegate = sessionDelegate
         }
         
         func send(events: [URL]) {
