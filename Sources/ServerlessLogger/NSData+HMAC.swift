@@ -29,7 +29,12 @@ import CryptoKit
 import Foundation
 
 extension Data {
-    func hmacSignature(withSecret secret: String) -> String {
-        fatalError("")
+    /// Returns Base64 encoded HMAC hash string
+    @available(iOS 13.0, OSX 10.15, watchOS 6.0, tvOS 13.0, *)
+    func hmacHash(with key: SymmetricKey) -> String {
+        let hashRaw = HMAC<SHA256>.authenticationCode(for: self, using: key)
+        let hashData = Data(hashRaw)
+        let hashString = hashData.base64EncodedString(options: [.lineLength64Characters])
+        return hashString
     }
 }
