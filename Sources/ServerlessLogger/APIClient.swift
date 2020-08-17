@@ -64,25 +64,24 @@ extension Logger  {
         
         func send(events: [URL]) {
             for diskURL in events {
-                var components = self.configuration.endpointURL
-                if #available(iOS 13.0, OSX 10.15, watchOS 6.0, tvOS 13.0, *),
-                   let secureConfig = self.configuration as? ServerlessLoggerHMACConfigurationProtocol
-                {
-                    // release the Data object as soon as possible in the loop
-                    autoreleasepool {
-                        let data = try! Data(contentsOf: diskURL)
+                autoreleasepool { // release the Data object as soon as possible in the loop
+                    var components = self.configuration.endpointURL
+                    if #available(iOS 13.0, OSX 10.15, watchOS 6.0, tvOS 13.0, *),
+                       let secureConfig = self.configuration as? ServerlessLoggerHMACConfigurationProtocol,
+                       let data = try? Data(contentsOf: diskURL)
+                    {
                         let signature = data.hmacHash(with: secureConfig.hmacKey)
                         components.queryItems?.append(URLQueryItem(name: "mac", value: signature))
+                    } else {
+                        NSDebugLog("JSBServerlessLogger: Sending payload without signature")
                     }
-                } else {
-                    NSDebugLog("JSBServerlessLogger: Sending insecure payload")
+                    let remoteURL = components.url!
+                    var request = URLRequest(url: remoteURL)
+                    request.httpMethod = "PUT"
+                    let task = self.session.uploadTask(with: request, fromFile: diskURL)
+                    self.sessionDelegate.inFlight[remoteURL] = diskURL
+                    task.resume()
                 }
-                let remoteURL = components.url!
-                var request = URLRequest(url: remoteURL)
-                request.httpMethod = "PUT"
-                let task = self.session.uploadTask(with: request, fromFile: diskURL)
-                self.sessionDelegate.inFlight[remoteURL] = diskURL
-                task.resume()
             }
         }
         
@@ -114,12 +113,12 @@ extension Logger.APIClient {
                 let onDiskURL = self.inFlight.removeValue(forKey: remoteURL)
             else { return }
             if let error = error {
-                NSDebugLog("JSBServerlessError: didFailtToSend: \(onDiskURL), error: \(error)")
+                NSDebugLog("JSBServerlessError: didFailToSend: \(onDiskURL), error: \(error)")
                 self.delegate?.didFailToSend(event: onDiskURL)
                 return
             }
             guard let response = task.response as? HTTPURLResponse, response.statusCode == 200 else {
-                NSDebugLog("JSBServerlessError: didFailtToSend: \(onDiskURL), response: \(String(describing: task.response))")
+                NSDebugLog("JSBServerlessError: didFailToSend: \(onDiskURL), response: \(String(describing: task.response))")
                 self.delegate?.didFailToSend(event: onDiskURL)
                 return
             }
