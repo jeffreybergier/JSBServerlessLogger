@@ -44,6 +44,8 @@ open class Logger: XCGLogger {
         public var directoryAppName: String = Bundle.main.bundleIdentifier ?? "JSBServerlessLogger"
         /// Parent structure for logger. Inside this folder, Inbox, Outbox, and Sent folders will be created
         public var directoryParentFolderName: String = "ServerlessLogger"
+        /// URL that the API Client uses to send PUT request
+        public var endpointURL: URLComponents = URLComponents(string: "")! // TODO: Fix this
         
         public static let `default`: Configuration = .init()
     }

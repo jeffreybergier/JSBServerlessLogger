@@ -27,11 +27,17 @@
 
 import Foundation
 
+public protocol LoggerAPIClientDelegate: class {
+    func didFinishSending(events: [URL])
+}
+
 extension Logger  {
     public class APIClient {
         
         public let configuration: Configuration
+        public weak var delegate: LoggerAPIClientDelegate?
         private let session: URLSession
+        private let sessionDelegate: Delegate
         
         init(configuration: Configuration) {
             let sessionConfiguration: URLSessionConfiguration
@@ -40,21 +46,38 @@ extension Logger  {
             } else {
                 let sessionIdentifier = configuration.identifier  + "APIClient"
                 sessionConfiguration = URLSessionConfiguration.background(withIdentifier: sessionIdentifier)
+                #if !os(macOS)
+                    sessionConfiguration.sessionSendsLaunchEvents = true
+                #endif
             }
             sessionConfiguration.allowsCellularAccess = true
             sessionConfiguration.isDiscretionary = true
             sessionConfiguration.shouldUseExtendedBackgroundIdleMode = true
-            #if !os(macOS)
-                sessionConfiguration.sessionSendsLaunchEvents = true
-            #endif
             
-            // Delegate() here is safe because the docs say that URLSession
-            // Holds a strong reference to its delegate until
-            // invalidateAndCancel() or finishTasksAndInvalidate() are called
+            let delegate = Delegate()
             self.session = URLSession(configuration: sessionConfiguration,
-                                      delegate: Delegate(),
+                                      delegate: delegate,
                                       delegateQueue: nil)
             self.configuration = configuration
+            self.sessionDelegate = delegate
+        }
+        
+        func send(events: [URL]) {
+            var tasks = [URLSessionTask]()
+            tasks.reserveCapacity(events.count)
+            for url in events {
+                autoreleasepool {
+                    let data = try! Data(contentsOf: url)
+                    let signature = data.hmacSignature(withSecret: "") // TODO: Fix this
+                    var components = self.configuration.endpointURL
+                    components.queryItems?.append(URLQueryItem(name: "mac", value: signature))
+                    var request = URLRequest(url: components.url!)
+                    request.httpMethod = "PUT"
+                    let task = self.session.uploadTask(with: request, fromFile: url)
+                    tasks.append(task)
+                    task.resume()
+                }
+            }
         }
         
         deinit {
@@ -64,7 +87,14 @@ extension Logger  {
 }
 
 extension Logger.APIClient {
-    fileprivate class Delegate: NSObject, URLSessionDelegate {
+    fileprivate class Delegate: NSObject, URLSessionTaskDelegate {
         
+        #if !os(macOS)
+        public func urlSessionDidFinishEvents(forBackgroundURLSession session: URLSession) { }
+        #endif
+        
+        public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+            
+        }
     }
 }
