@@ -26,11 +26,36 @@
 //
 
 import XCTest
+import Foundation
+@testable import ServerlessLogger
 
-#if !canImport(ObjectiveC)
-public func allTests() -> [XCTestCaseEntry] {
-    return [
-        // testCase(ServerlessLoggerTests.allTests),
-    ]
+class FileManagerStubParent: FileManagerProtocol {
+
+    func moveItem(at: URL, to: URL) throws {
+        fatalError()
+    }
+
+    func urls(for: Foundation.FileManager.SearchPathDirectory, in: Foundation.FileManager.SearchPathDomainMask) -> [URL] {
+        fatalError()
+    }
+
+    func contentsOfDirectory(at url: URL, includingPropertiesForKeys: [URLResourceKey]?, options: Foundation.FileManager.DirectoryEnumerationOptions) throws -> [URL] {
+        fatalError()
+    }
+
+    func createDirectory(at: URL, withIntermediateDirectories: Bool, attributes: [FileAttributeKey : Any]?) throws {
+        fatalError()
+    }
+
+    func contents(atPath: String) -> Data? {
+        fatalError()
+    }
+
+    func createFile(atPath: String, contents: Data?, attributes: [FileAttributeKey : Any]?) -> Bool {
+        fatalError()
+    }
+
+    func fileExists(atPath: String, isDirectory: UnsafeMutablePointer<ObjCBool>?) -> Bool {
+        fatalError()
+    }
 }
-#endif

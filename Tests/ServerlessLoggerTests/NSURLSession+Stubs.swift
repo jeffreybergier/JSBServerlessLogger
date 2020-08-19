@@ -26,11 +26,16 @@
 //
 
 import XCTest
+import Foundation
+@testable import ServerlessLogger
 
-#if !canImport(ObjectiveC)
-public func allTests() -> [XCTestCaseEntry] {
-    return [
-        // testCase(ServerlessLoggerTests.allTests),
-    ]
+class URLSessionStubParent: URLSessionProtocol {
+    
+    func uploadTask(with request: URLRequest, fromFile fileURL: URL) -> URLSessionUploadTask {
+        fatalError()
+    }
+
+    func finishTasksAndInvalidate() {
+        fatalError()
+    }
 }
-#endif
