@@ -146,7 +146,48 @@ class APIClientSessionDelegateTests: XCTestCase {
         self.clientDelegate.didFailToSend = { _ in
             XCTFail("Did not expect failure")
         }
-        self.sessionDelegate.didCompleteTask(originalRequestURL: remoteURL, responseStatusCode: 200, error: nil)
+        self.sessionDelegate.didCompleteTask(originalRequestURL: remoteURL,
+                                             responseStatusCode: 200,
+                                             error: nil)
+        XCTAssertTrue(self.sessionDelegate.inFlight.isEmpty)
+        self.wait(for: [wait], timeout: 0.0)
+    }
+
+    func test_didFail_error() {
+        let remoteURL = self.me.mock.remoteURL.url!
+        let onDiskURL = self.me.mock.onDisk.first!.url
+        self.sessionDelegate.inFlight[remoteURL] = onDiskURL
+        self.clientDelegate.didSendPayload = { _ in
+            XCTFail("Did not expect success")
+        }
+        let wait = XCTestExpectation()
+        self.clientDelegate.didFailToSend = { url in
+            XCTAssertEqual(url, onDiskURL)
+            wait.fulfill()
+        }
+        let error = NSError(domain: "", code: 0, userInfo: nil)
+        self.sessionDelegate.didCompleteTask(originalRequestURL: remoteURL,
+                                             responseStatusCode: 200,
+                                             error: error)
+        XCTAssertTrue(self.sessionDelegate.inFlight.isEmpty)
+        self.wait(for: [wait], timeout: 0.0)
+    }
+
+    func test_didFail_statusCode() {
+        let remoteURL = self.me.mock.remoteURL.url!
+        let onDiskURL = self.me.mock.onDisk.first!.url
+        self.sessionDelegate.inFlight[remoteURL] = onDiskURL
+        self.clientDelegate.didSendPayload = { _ in
+            XCTFail("Did not expect success")
+        }
+        let wait = XCTestExpectation()
+        self.clientDelegate.didFailToSend = { url in
+            XCTAssertEqual(url, onDiskURL)
+            wait.fulfill()
+        }
+        self.sessionDelegate.didCompleteTask(originalRequestURL: remoteURL,
+                                             responseStatusCode: 201,
+                                             error: nil)
         XCTAssertTrue(self.sessionDelegate.inFlight.isEmpty)
         self.wait(for: [wait], timeout: 0.0)
     }
