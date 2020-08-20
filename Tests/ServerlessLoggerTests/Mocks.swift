@@ -53,3 +53,17 @@ enum Mock1: MockProtocol {
     }()
 }
 
+enum Mock2: MockProtocol {
+    static let onDiskURL = URL(string: "file:///ThisIsMyCoolFile")!
+    static let onDiskData = "This is some data from the disk".data(using: .utf8)!
+    static let remoteURL = URLComponents(string: "https://www.this-is-a-test.com")!
+    static let symmetricKey = SymmetricKey(data: "Hello World".data(using: .utf8)!)
+    static let configuration: ServerlessLoggerConfigurationProtocol = {
+        let s = Logger.StorageLocation(baseDirectory: URL(string: "file:///baseDir")!,
+                                       appName: "UnitTests",
+                                       parentDirectory: "Mock2")
+        let c = Logger.DefaultInsecureConfiguration(endpointURL: remoteURL, storageLocation: s)
+        return c
+    }()
+}
+

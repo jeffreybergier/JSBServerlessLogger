@@ -29,15 +29,16 @@ import XCTest
 import Foundation
 @testable import ServerlessLogger
 
-class APIClientTests: XCTestCase {
+class APIClientMock1Tests: XCTestCase {
 
-    static let mock = Mock1.self
+    private static let mock = Mock1.self
     let fm = FileManagerClosureStub()
     let session = URLSessionClosureStub()
     private let sessionDelegate = SessionDelegate()
-    lazy var client = Logger.APIClient(configuration: APIClientTests.mock.configuration,
+    lazy var client = Logger.APIClient(configuration: self.me.mock.configuration,
                                        clientDelegate: nil,
                                        sessionDelegate: self.sessionDelegate)
+    var me: APIClientMock1Tests.Type { type(of: self) }
 
     override func setUpWithError() throws {
         try super.setUpWithError()
@@ -46,22 +47,56 @@ class APIClientTests: XCTestCase {
     }
 
     func test_send_secure() {
-        self.fm.contentsAtPath = { _ in APIClientTests.mock.onDiskData }
+        self.fm.contentsAtPath = { _ in self.me.mock.onDiskData }
         let wait = XCTestExpectation()
         wait.expectedFulfillmentCount = 1
         self.session.uploadTaskWithRequestFromFile = { request, onDiskURL in
             wait.fulfill()
             XCTAssertEqual(request.url!.absoluteString,
                            "https://www.this-is-a-test.com?mac=BAlnJZfKW/66t0kguloks5YuDMTRuy3nhUc26YdftBE%3D")
-            XCTAssertEqual(APIClientTests.mock.onDiskURL, onDiskURL)
+            XCTAssertEqual(self.me.mock.onDiskURL, onDiskURL)
             return URLSessionUploadTask()
         }
         XCTAssertTrue(self.sessionDelegate.inFlight.isEmpty)
-        self.client.send(payload: APIClientTests.mock.onDiskURL)
+        self.client.send(payload: self.me.mock.onDiskURL)
         XCTAssertEqual(self.sessionDelegate.inFlight.count, 1)
         self.wait(for: [wait], timeout: 0.0)
     }
+}
 
+class APIClientMock2Tests: XCTestCase {
+
+    private static let mock = Mock2.self
+    let fm = FileManagerClosureStub()
+    let session = URLSessionClosureStub()
+    private let sessionDelegate = SessionDelegate()
+    lazy var client = Logger.APIClient(configuration: self.me.mock.configuration,
+                                       clientDelegate: nil,
+                                       sessionDelegate: self.sessionDelegate)
+    var me: APIClientMock2Tests.Type { type(of: self) }
+
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        ServerlessLogger.FileManager.default = self.fm
+        ServerlessLogger.URLSession.testReplacement = self.session
+    }
+
+    func test_send_insecure() {
+        self.fm.contentsAtPath = { _ in self.me.mock.onDiskData }
+        let wait = XCTestExpectation()
+        wait.expectedFulfillmentCount = 1
+        self.session.uploadTaskWithRequestFromFile = { request, onDiskURL in
+            wait.fulfill()
+            XCTAssertEqual(request.url!.absoluteString,
+                           "https://www.this-is-a-test.com")
+            XCTAssertEqual(self.me.mock.onDiskURL, onDiskURL)
+            return URLSessionUploadTask()
+        }
+        XCTAssertTrue(self.sessionDelegate.inFlight.isEmpty)
+        self.client.send(payload: self.me.mock.onDiskURL)
+        XCTAssertEqual(self.sessionDelegate.inFlight.count, 1)
+        self.wait(for: [wait], timeout: 0.0)
+    }
 }
 
 fileprivate class SessionDelegate: NSObject, ServerlessLoggerAPISessionDelegate {
