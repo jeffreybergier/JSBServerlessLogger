@@ -33,8 +33,15 @@ public protocol ServerlessLoggerAPIClientDelegate: class {
 }
 
 public protocol ServerlessLoggerAPISessionDelegate: URLSessionTaskDelegate {
+    /// Manages internal state of tasks in progress
     var inFlight: Dictionary<URL, URL> { get set }
+    /// Make weak to prevent memory leaks
     var delegate: ServerlessLoggerAPIClientDelegate? { get set }
+    /// This method is expected to clean up internal state `inFlight` and then call `didSend` and `didFailToSend`
+    /// on its `ServerlessLoggerAPIClientDelegate`.
+    /// Expected to be called by URLSessionTaskDelegate `URLSession:task:didCompleteWithError:`
+    /// after extracting the necessary information.
+    func didCompleteTask(originalRequestURL: URL, responseStatusCode: Int, error: Error?)
 }
 
 extension Logger  {
@@ -100,13 +107,13 @@ extension Logger  {
 }
 
 extension Logger.APIClient {
-    fileprivate class SessionDelegate: NSObject, ServerlessLoggerAPISessionDelegate {
+    open class SessionDelegate: NSObject, ServerlessLoggerAPISessionDelegate {
         
         /// Key: RemoteURL, Value: OnDiskURL
-        internal var inFlight = Dictionary<URL, URL>()
-        internal weak var delegate: ServerlessLoggerAPIClientDelegate?
+        public var inFlight = Dictionary<URL, URL>()
+        public weak var delegate: ServerlessLoggerAPIClientDelegate?
         
-        internal init(delegate: ServerlessLoggerAPIClientDelegate?) {
+        public init(delegate: ServerlessLoggerAPIClientDelegate?) {
             self.delegate = delegate
             super.init()
         }
@@ -114,23 +121,33 @@ extension Logger.APIClient {
         #if !os(macOS)
         public func urlSessionDidFinishEvents(forBackgroundURLSession session: URLSession) { }
         #endif
-        
-        public func urlSession(_: Foundation.URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
-            guard
-                let remoteURL = task.originalRequest?.url,
-                let onDiskURL = self.inFlight.removeValue(forKey: remoteURL)
-            else { return }
+
+        public func didCompleteTask(originalRequestURL remoteURL: URL, responseStatusCode: Int, error: Error?) {
+            guard let onDiskURL = self.inFlight.removeValue(forKey: remoteURL) else { return }
             if let error = error {
                 NSDebugLog("JSBServerlessError: didFailToSend: \(onDiskURL), error: \(error)")
                 self.delegate?.didFailToSend(payload: onDiskURL)
                 return
             }
-            guard let response = task.response as? HTTPURLResponse, response.statusCode == 200 else {
-                NSDebugLog("JSBServerlessError: didFailToSend: \(onDiskURL), response: \(String(describing: task.response))")
+            guard responseStatusCode == 200 else {
+                NSDebugLog("JSBServerlessError: didFailToSend: \(onDiskURL), responseStatusCode: \(String(describing: responseStatusCode))")
                 self.delegate?.didFailToSend(payload: onDiskURL)
                 return
             }
             self.delegate?.didSend(payload: onDiskURL)
+        }
+        
+        public func urlSession(_: Foundation.URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+            guard
+                let remoteURL = task.originalRequest?.url,
+                let response = task.response as? HTTPURLResponse
+            else {
+                let message = "JSBServerlessError: Task Completed but missing required information: \(task)"
+                NSDebugLog(message)
+                assertionFailure(message)
+                return
+            }
+            self.didCompleteTask(originalRequestURL: remoteURL, responseStatusCode: response.statusCode, error: error)
         }
     }
 }

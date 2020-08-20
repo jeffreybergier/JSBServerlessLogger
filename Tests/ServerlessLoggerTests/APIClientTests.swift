@@ -32,13 +32,14 @@ import Foundation
 class APIClientMock1Tests: XCTestCase {
 
     private static let mock = Mock1.self
+    var me: APIClientMock1Tests.Type { type(of: self) }
+
     let fm = FileManagerClosureStub()
     let session = URLSessionClosureStub()
-    private let sessionDelegate = SessionDelegate()
+    private let sessionDelegate = SessionDelegateStub()
     lazy var client = Logger.APIClient(configuration: self.me.mock.configuration,
                                        clientDelegate: nil,
                                        sessionDelegate: self.sessionDelegate)
-    var me: APIClientMock1Tests.Type { type(of: self) }
 
     override func setUpWithError() throws {
         try super.setUpWithError()
@@ -70,13 +71,14 @@ class APIClientMock1Tests: XCTestCase {
 class APIClientMock2Tests: XCTestCase {
 
     private static let mock = Mock2.self
+    var me: APIClientMock2Tests.Type { type(of: self) }
+
     let fm = FileManagerClosureStub()
     let session = URLSessionClosureStub()
-    private let sessionDelegate = SessionDelegate()
+    private let sessionDelegate = SessionDelegateStub()
     lazy var client = Logger.APIClient(configuration: self.me.mock.configuration,
                                        clientDelegate: nil,
                                        sessionDelegate: self.sessionDelegate)
-    var me: APIClientMock2Tests.Type { type(of: self) }
 
     override func setUpWithError() throws {
         try super.setUpWithError()
@@ -105,7 +107,47 @@ class APIClientMock2Tests: XCTestCase {
     }
 }
 
-fileprivate class SessionDelegate: NSObject, ServerlessLoggerAPISessionDelegate {
+fileprivate class SessionDelegateStub: NSObject, ServerlessLoggerAPISessionDelegate {
     var inFlight = Dictionary<URL, URL>()
-    var delegate: ServerlessLoggerAPIClientDelegate? = nil
+    var delegate: ServerlessLoggerAPIClientDelegate?
+    func didCompleteTask(originalRequestURL: URL, responseStatusCode: Int, error: Error?) {}
+}
+
+fileprivate class ClientDelegateStub: ServerlessLoggerAPIClientDelegate {
+
+    var didSendPayload: ((URL) -> Void)?
+    var didFailToSend: ((URL) -> Void)?
+
+    func didSend(payload: URL) {
+        self.didSendPayload?(payload)
+    }
+    func didFailToSend(payload: URL) {
+        self.didFailToSend?(payload)
+    }
+}
+
+class APIClientSessionDelegateTests: XCTestCase {
+
+    private static let mock = Mock1.self
+    var me: APIClientSessionDelegateTests.Type { type(of: self) }
+
+    lazy var sessionDelegate = Logger.APIClient.SessionDelegate(delegate: self.clientDelegate)
+    private let clientDelegate = ClientDelegateStub()
+
+    func test_didSendSuccessfully() {
+        let remoteURL = URL(string: "https://www.this-is-a-test")!
+        let onDiskURL = URL(string: "file:///ThisIsALocalURL")
+        self.sessionDelegate.inFlight[remoteURL] = onDiskURL
+        let wait = XCTestExpectation()
+        self.clientDelegate.didSendPayload = { url in
+            XCTAssertEqual(url, onDiskURL)
+            wait.fulfill()
+        }
+        self.clientDelegate.didFailToSend = { _ in
+            XCTFail("Did not expect failure")
+        }
+        self.sessionDelegate.didCompleteTask(originalRequestURL: remoteURL, responseStatusCode: 200, error: nil)
+        XCTAssertTrue(self.sessionDelegate.inFlight.isEmpty)
+        self.wait(for: [wait], timeout: 0.0)
+    }
 }
