@@ -55,7 +55,7 @@ class APIClientMock1Tests: XCTestCase {
             XCTAssertEqual(request.url!.absoluteString,
                            "https://www.this-is-a-test.com?mac=BAlnJZfKW/66t0kguloks5YuDMTRuy3nhUc26YdftBE%3D")
             XCTAssertEqual(self.me.mock.onDiskURL, onDiskURL)
-            return URLSessionUploadTask()
+            return FakeUploadTask
         }
         XCTAssertTrue(self.sessionDelegate.inFlight.isEmpty)
         self.client.send(payload: self.me.mock.onDiskURL)
@@ -90,7 +90,7 @@ class APIClientMock2Tests: XCTestCase {
             XCTAssertEqual(request.url!.absoluteString,
                            "https://www.this-is-a-test.com")
             XCTAssertEqual(self.me.mock.onDiskURL, onDiskURL)
-            return URLSessionUploadTask()
+            return FakeUploadTask
         }
         XCTAssertTrue(self.sessionDelegate.inFlight.isEmpty)
         self.client.send(payload: self.me.mock.onDiskURL)

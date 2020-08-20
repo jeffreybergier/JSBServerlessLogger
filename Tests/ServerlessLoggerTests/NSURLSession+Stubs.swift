@@ -46,7 +46,7 @@ class URLSessionClosureStub: URLSessionStubParent {
     var finishTasksAndInvalidateClosure: (() -> Void)?
 
     override func uploadTask(with request: URLRequest, fromFile fileURL: URL) -> URLSessionUploadTask {
-        return self.uploadTaskWithRequestFromFile?(request, fileURL) ?? URLSessionUploadTask()
+        return self.uploadTaskWithRequestFromFile?(request, fileURL) ?? FakeUploadTask
     }
 
     override func finishTasksAndInvalidate() {

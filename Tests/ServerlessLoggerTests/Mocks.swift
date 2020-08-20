@@ -29,6 +29,8 @@ import CryptoKit
 import Foundation
 @testable import ServerlessLogger
 
+var FakeUploadTask: URLSessionUploadTask { URLSessionUploadTask() }
+
 protocol MockProtocol {
     static var onDiskURL: URL { get }
     static var onDiskData: Data { get }
