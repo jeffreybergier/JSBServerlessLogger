@@ -48,21 +48,21 @@ class APIClientMock1Tests: XCTestCase {
     }
 
     func test_send_secure() {
-        self.fm.contentsAtPath = { _ in self.me.mock.onDiskData }
+        self.fm.contentsAtPath = { _ in self.me.mock.onDisk.first!.1 }
         let wait1 = XCTestExpectation()
         let wait2 = XCTestExpectation()
         self.session.uploadTaskWithRequestFromFile = { request, onDiskURL in
             wait1.fulfill()
             XCTAssertEqual(request.url!.absoluteString,
                            "https://www.this-is-a-test.com?mac=BAlnJZfKW/66t0kguloks5YuDMTRuy3nhUc26YdftBE%3D")
-            XCTAssertEqual(self.me.mock.onDiskURL, onDiskURL)
+            XCTAssertEqual(self.me.mock.onDisk.first!.url, onDiskURL)
             return FakeUploadTask
         }
         self.session.resumeTask = { _ in
             wait2.fulfill()
         }
         XCTAssertTrue(self.sessionDelegate.inFlight.isEmpty)
-        self.client.send(payload: self.me.mock.onDiskURL)
+        self.client.send(payload: self.me.mock.onDisk.first!.url)
         XCTAssertEqual(self.sessionDelegate.inFlight.count, 1)
         self.wait(for: [wait1, wait2], timeout: 0.0)
     }
@@ -87,21 +87,21 @@ class APIClientMock2Tests: XCTestCase {
     }
 
     func test_send_insecure() {
-        self.fm.contentsAtPath = { _ in self.me.mock.onDiskData }
+        self.fm.contentsAtPath = { _ in self.me.mock.onDisk.first!.data }
         let wait1 = XCTestExpectation()
         let wait2 = XCTestExpectation()
         self.session.uploadTaskWithRequestFromFile = { request, onDiskURL in
             wait1.fulfill()
             XCTAssertEqual(request.url!.absoluteString,
                            "https://www.this-is-a-test.com")
-            XCTAssertEqual(self.me.mock.onDiskURL, onDiskURL)
+            XCTAssertEqual(self.me.mock.onDisk.first!.url, onDiskURL)
             return FakeUploadTask
         }
         self.session.resumeTask = { _ in
             wait2.fulfill()
         }
         XCTAssertTrue(self.sessionDelegate.inFlight.isEmpty)
-        self.client.send(payload: self.me.mock.onDiskURL)
+        self.client.send(payload: self.me.mock.onDisk.first!.url)
         XCTAssertEqual(self.sessionDelegate.inFlight.count, 1)
         self.wait(for: [wait1, wait2], timeout: 0.0)
     }
@@ -135,8 +135,8 @@ class APIClientSessionDelegateTests: XCTestCase {
     private let clientDelegate = ClientDelegateStub()
 
     func test_didSendSuccessfully() {
-        let remoteURL = URL(string: "https://www.this-is-a-test")!
-        let onDiskURL = URL(string: "file:///ThisIsALocalURL")
+        let remoteURL = self.me.mock.remoteURL.url!
+        let onDiskURL = self.me.mock.onDisk.first!.url
         self.sessionDelegate.inFlight[remoteURL] = onDiskURL
         let wait = XCTestExpectation()
         self.clientDelegate.didSendPayload = { url in

@@ -31,17 +31,19 @@ import Foundation
 
 var FakeUploadTask: URLSessionUploadTask { URLSessionUploadTask() }
 
+typealias OnDisk = (url: URL, data: Data)
+
 protocol MockProtocol {
-    static var onDiskURL: URL { get }
-    static var onDiskData: Data { get }
+    static var onDisk: [OnDisk] { get }
     static var remoteURL: URLComponents { get }
     static var symmetricKey: SymmetricKey { get }
     static var configuration: ServerlessLoggerConfigurationProtocol { get }
 }
 
 enum Mock1: MockProtocol {
-    static let onDiskURL = URL(string: "file:///ThisIsMyCoolFile")!
-    static let onDiskData = "This is some data from the disk".data(using: .utf8)!
+    static let onDisk: [OnDisk] = [
+        (URL(string: "file:///ThisIsMyCoolFile")!, "This is some data from the disk".data(using: .utf8)!)
+    ]
     static let remoteURL = URLComponents(string: "https://www.this-is-a-test.com")!
     static let symmetricKey = SymmetricKey(data: "Hello World".data(using: .utf8)!)
     static let configuration: ServerlessLoggerConfigurationProtocol = {
@@ -56,8 +58,9 @@ enum Mock1: MockProtocol {
 }
 
 enum Mock2: MockProtocol {
-    static let onDiskURL = URL(string: "file:///ThisIsMyCoolFile")!
-    static let onDiskData = "This is some data from the disk".data(using: .utf8)!
+    static let onDisk: [OnDisk] = [
+        (URL(string: "file:///ThisIsMyCoolFile")!, "This is some data from the disk".data(using: .utf8)!)
+    ]
     static let remoteURL = URLComponents(string: "https://www.this-is-a-test.com")!
     static let symmetricKey = SymmetricKey(data: "Hello World".data(using: .utf8)!)
     static let configuration: ServerlessLoggerConfigurationProtocol = {
