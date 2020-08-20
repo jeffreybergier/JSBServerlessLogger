@@ -48,19 +48,22 @@ class APIClientMock1Tests: XCTestCase {
 
     func test_send_secure() {
         self.fm.contentsAtPath = { _ in self.me.mock.onDiskData }
-        let wait = XCTestExpectation()
-        wait.expectedFulfillmentCount = 1
+        let wait1 = XCTestExpectation()
+        let wait2 = XCTestExpectation()
         self.session.uploadTaskWithRequestFromFile = { request, onDiskURL in
-            wait.fulfill()
+            wait1.fulfill()
             XCTAssertEqual(request.url!.absoluteString,
                            "https://www.this-is-a-test.com?mac=BAlnJZfKW/66t0kguloks5YuDMTRuy3nhUc26YdftBE%3D")
             XCTAssertEqual(self.me.mock.onDiskURL, onDiskURL)
             return FakeUploadTask
         }
+        self.session.resumeTask = { _ in
+            wait2.fulfill()
+        }
         XCTAssertTrue(self.sessionDelegate.inFlight.isEmpty)
         self.client.send(payload: self.me.mock.onDiskURL)
         XCTAssertEqual(self.sessionDelegate.inFlight.count, 1)
-        self.wait(for: [wait], timeout: 0.0)
+        self.wait(for: [wait1, wait2], timeout: 0.0)
     }
 }
 
@@ -83,19 +86,22 @@ class APIClientMock2Tests: XCTestCase {
 
     func test_send_insecure() {
         self.fm.contentsAtPath = { _ in self.me.mock.onDiskData }
-        let wait = XCTestExpectation()
-        wait.expectedFulfillmentCount = 1
+        let wait1 = XCTestExpectation()
+        let wait2 = XCTestExpectation()
         self.session.uploadTaskWithRequestFromFile = { request, onDiskURL in
-            wait.fulfill()
+            wait1.fulfill()
             XCTAssertEqual(request.url!.absoluteString,
                            "https://www.this-is-a-test.com")
             XCTAssertEqual(self.me.mock.onDiskURL, onDiskURL)
             return FakeUploadTask
         }
+        self.session.resumeTask = { _ in
+            wait2.fulfill()
+        }
         XCTAssertTrue(self.sessionDelegate.inFlight.isEmpty)
         self.client.send(payload: self.me.mock.onDiskURL)
         XCTAssertEqual(self.sessionDelegate.inFlight.count, 1)
-        self.wait(for: [wait], timeout: 0.0)
+        self.wait(for: [wait1, wait2], timeout: 0.0)
     }
 }
 

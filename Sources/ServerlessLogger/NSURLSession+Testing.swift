@@ -31,23 +31,31 @@ import Foundation
     
     @objc(uploadTaskWithRequest:fromFile:)
     func uploadTask(with request: URLRequest, fromFile fileURL: URL) -> URLSessionUploadTask
-    
+    func resume(task: URLSessionTask)
     func finishTasksAndInvalidate()
 }
 
 internal enum URLSession {
-    
+
+    #if DEBUG
     internal static var testReplacement: URLSessionProtocol?
+    #endif
     
     static func new(configuration: URLSessionConfiguration,
                     delegate: URLSessionDelegate?,
                     delegateQueue queue: OperationQueue?) -> URLSessionProtocol
     {
+        #if DEBUG
         if let testReplacement = self.testReplacement { return testReplacement }
+        #endif
         return Foundation.URLSession(configuration: configuration,
                                      delegate: delegate,
                                      delegateQueue: queue)
     }
 }
 
-extension Foundation.URLSession: URLSessionProtocol { }
+extension Foundation.URLSession: URLSessionProtocol {
+    func resume(task: URLSessionTask) {
+        task.resume()
+    }
+}

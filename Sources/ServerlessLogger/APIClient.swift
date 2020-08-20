@@ -89,7 +89,7 @@ extension Logger  {
                 request.httpMethod = "PUT"
                 let task = self.session.uploadTask(with: request, fromFile: onDiskURL)
                 self.sessionDelegate.inFlight[remoteURL] = onDiskURL
-                task.resume()
+                self.session.resume(task: task)
             }
         }
         

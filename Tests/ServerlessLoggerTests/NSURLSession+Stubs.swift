@@ -30,8 +30,12 @@ import Foundation
 @testable import ServerlessLogger
 
 class URLSessionStubParent: URLSessionProtocol {
-    
+
     func uploadTask(with request: URLRequest, fromFile fileURL: URL) -> URLSessionUploadTask {
+        fatalError()
+    }
+
+    func resume(task: URLSessionTask) {
         fatalError()
     }
 
@@ -43,10 +47,15 @@ class URLSessionStubParent: URLSessionProtocol {
 class URLSessionClosureStub: URLSessionStubParent {
 
     var uploadTaskWithRequestFromFile: ((URLRequest, URL) -> URLSessionUploadTask)?
+    var resumeTask: ((URLSessionTask) -> Void)?
     var finishTasksAndInvalidateClosure: (() -> Void)?
 
     override func uploadTask(with request: URLRequest, fromFile fileURL: URL) -> URLSessionUploadTask {
         return self.uploadTaskWithRequestFromFile?(request, fileURL) ?? FakeUploadTask
+    }
+
+    override func resume(task: URLSessionTask) {
+        self.resumeTask?(task)
     }
 
     override func finishTasksAndInvalidate() {
