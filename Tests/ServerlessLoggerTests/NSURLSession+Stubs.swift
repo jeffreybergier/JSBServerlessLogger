@@ -39,3 +39,17 @@ class URLSessionStubParent: URLSessionProtocol {
         fatalError()
     }
 }
+
+class URLSessionClosureStub: URLSessionStubParent {
+
+    var uploadTaskWithRequestFromFile: ((URLRequest, URL) -> URLSessionUploadTask)?
+    var finishTasksAndInvalidateClosure: (() -> Void)?
+
+    override func uploadTask(with request: URLRequest, fromFile fileURL: URL) -> URLSessionUploadTask {
+        return self.uploadTaskWithRequestFromFile?(request, fileURL) ?? URLSessionUploadTask()
+    }
+
+    override func finishTasksAndInvalidate() {
+        self.finishTasksAndInvalidateClosure?()
+    }
+}

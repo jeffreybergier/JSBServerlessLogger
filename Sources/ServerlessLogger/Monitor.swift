@@ -38,7 +38,7 @@ extension Logger {
         }()
         
         public let configuration: ServerlessLoggerConfigurationProtocol
-        private lazy var apiClient = APIClient(configuration: self.configuration, delegate: self)
+        private lazy var apiClient = APIClient(configuration: self.configuration, clientDelegate: self)
         private lazy var _presentedItemOperationQueue = DispatchQueue(label: configuration.identifier  + "Monitor",
                                                                       qos: .utility)
         

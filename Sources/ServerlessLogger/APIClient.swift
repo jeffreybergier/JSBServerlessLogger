@@ -32,15 +32,21 @@ public protocol ServerlessLoggerAPIClientDelegate: class {
     func didFailToSend(payload: URL)
 }
 
+public protocol ServerlessLoggerAPISessionDelegate: URLSessionTaskDelegate {
+    var inFlight: Dictionary<URL, URL> { get set }
+    var delegate: ServerlessLoggerAPIClientDelegate? { get set }
+}
+
 extension Logger  {
     public class APIClient {
         
         public let configuration: ServerlessLoggerConfigurationProtocol
         private let session: URLSessionProtocol
-        private let sessionDelegate: SessionDelegate
+        private let sessionDelegate: ServerlessLoggerAPISessionDelegate
         
         init(configuration: ServerlessLoggerConfigurationProtocol,
-             delegate: ServerlessLoggerAPIClientDelegate?)
+             clientDelegate: ServerlessLoggerAPIClientDelegate?,
+             sessionDelegate: ServerlessLoggerAPISessionDelegate? = nil)
         {
             let sessionConfiguration: URLSessionConfiguration
             if true { // TODO: replace with background allowed
@@ -56,7 +62,7 @@ extension Logger  {
             sessionConfiguration.isDiscretionary = true
             sessionConfiguration.shouldUseExtendedBackgroundIdleMode = true
             
-            let sessionDelegate = SessionDelegate(delegate: delegate)
+            let sessionDelegate = sessionDelegate ?? SessionDelegate(delegate: clientDelegate)
             self.session = URLSession.new(configuration: sessionConfiguration,
                                           delegate: sessionDelegate,
                                           delegateQueue: nil)
@@ -72,7 +78,9 @@ extension Logger  {
                    let data = FileManager.default.contents(atPath: onDiskURL.path)
                 {
                     let signature = data.hmacHash(with: secureConfig.hmacKey)
-                    components.queryItems?.append(URLQueryItem(name: "mac", value: signature))
+                    var queryItems = components.queryItems ?? []
+                    queryItems.append(URLQueryItem(name: "mac", value: signature))
+                    components.queryItems = queryItems
                 } else {
                     NSDebugLog("JSBServerlessLogger: Sending payload without signature")
                 }
@@ -92,7 +100,7 @@ extension Logger  {
 }
 
 extension Logger.APIClient {
-    fileprivate class SessionDelegate: NSObject, URLSessionTaskDelegate {
+    fileprivate class SessionDelegate: NSObject, ServerlessLoggerAPISessionDelegate {
         
         /// Key: RemoteURL, Value: OnDiskURL
         internal var inFlight = Dictionary<URL, URL>()

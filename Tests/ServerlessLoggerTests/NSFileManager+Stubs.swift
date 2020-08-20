@@ -59,3 +59,10 @@ class FileManagerStubParent: FileManagerProtocol {
         fatalError()
     }
 }
+
+class FileManagerClosureStub: FileManagerStubParent {
+    var contentsAtPath: ((String) -> Data?)?
+    override func contents(atPath: String) -> Data? {
+        return self.contentsAtPath?(atPath)
+    }
+}
