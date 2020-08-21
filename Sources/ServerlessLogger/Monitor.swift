@@ -64,7 +64,7 @@ extension Logger.Monitor: NSFilePresenter {
                                                                     .skipsPackageDescendants,
                                                                     .skipsSubdirectoryDescendants])
             // TODO: Make network requests with URLs
-            let c = NSFileCoordinator(filePresenter: self)
+            let c = NSFileCoordinator.new(filePresenter: self)
             for sourceURL in inboxLogURLs {
                 let destURL = self.configuration.storageLocation.outboxURL
                                   .appendingPathComponent(sourceURL.lastPathComponent)
@@ -85,7 +85,7 @@ extension Logger.Monitor: ServerlessLoggerAPIClientDelegate {
             do {
                 let destURL = self.configuration.storageLocation.sentURL
                                   .appendingPathComponent(sourceURL.lastPathComponent)
-                let c = NSFileCoordinator()
+                let c = NSFileCoordinator.new()
                 let fm = FileManager.default
                 try c.coordinateMoving(from: sourceURL, to: destURL) {
                     try fm.moveItem(at: $0, to: $1)
@@ -101,7 +101,7 @@ extension Logger.Monitor: ServerlessLoggerAPIClientDelegate {
             do {
                 let destURL = self.configuration.storageLocation.inboxURL
                                   .appendingPathComponent(sourceURL.lastPathComponent)
-                let c = NSFileCoordinator()
+                let c = NSFileCoordinator.new()
                 let fm = FileManager.default
                 try c.coordinateMoving(from: sourceURL, to: destURL) {
                     try fm.moveItem(at: $0, to: $1)

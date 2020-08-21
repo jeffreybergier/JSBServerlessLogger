@@ -27,27 +27,32 @@
 
 import Foundation
 
-extension Foundation.NSFileCoordinator {
-    internal func coordinateMoving(from: URL, to: URL, accessor: (URL, URL) throws -> Void) throws {
-        var accessorError: Error?
-        var coordinatorError: NSError?
-        self.coordinate(writingItemAt: from,
-                        options: [.forMoving],
-                        writingItemAt: to,
-                        options: [.forReplacing],
-                        error: &coordinatorError)
-        { lhs, rhs in
-            do {
-                try accessor(lhs, rhs)
-            } catch {
-                accessorError = error
-            }
-        }
-        if let error = coordinatorError {
-            throw error
-        }
-        if let error = accessorError {
-            throw error
-        }
+internal protocol NSFileCoordinatorProtocol: class {
+
+    static func addFilePresenter(_ filePresenter: NSFilePresenter)
+
+    func coordinateMoving(from: URL, to: URL, accessor: (URL, URL) throws -> Void) throws
+
+    func coordinate(writingItemAt: URL, options: Foundation.NSFileCoordinator.WritingOptions, writingItemAt: URL, options: Foundation.NSFileCoordinator.WritingOptions, error: NSErrorPointer, byAccessor: (URL, URL) -> Void)
+}
+
+internal enum NSFileCoordinator {
+
+    static func addFilePresenter(_ filePresenter: NSFilePresenter) {
+        Foundation.NSFileCoordinator.addFilePresenter(filePresenter)
+    }
+
+    #if DEBUG
+    internal static var testReplacement: NSFileCoordinatorProtocol?
+    #endif
+
+    static func new(filePresenter: NSFilePresenter? = nil) -> NSFileCoordinatorProtocol
+    {
+        #if DEBUG
+        if let testReplacement = self.testReplacement { return testReplacement }
+        #endif
+        return Foundation.NSFileCoordinator(filePresenter: filePresenter)
     }
 }
+
+extension Foundation.NSFileCoordinator: NSFileCoordinatorProtocol { }
