@@ -69,15 +69,27 @@ class FileManagerClosureStub: FileManagerStubParent {
     var contentsOfDirectoryAtURLIncludingPropertiesForKeysOptions:
         ((URL, [URLResourceKey]?, Foundation.FileManager.DirectoryEnumerationOptions) -> [URL])?
 
+    var fileExistsAtPathIsDirectory: ((String, UnsafeMutablePointer<ObjCBool>?) -> Bool)?
+
+    var createDirectoryAtURLWithIntermediateDirectoriesAttributes: ((URL, Bool, [FileAttributeKey : Any]?) throws -> Void)?
+
     override func contents(atPath: String) -> Data? {
-        return self.contentsAtPath?(atPath)
+        return self.contentsAtPath!(atPath)
     }
 
     override func moveItem(at: URL, to: URL) throws {
-        self.moveItemAtURLtoURL?(at, to)
+        self.moveItemAtURLtoURL!(at, to)
     }
 
     override func contentsOfDirectory(at url: URL, includingPropertiesForKeys keys: [URLResourceKey]?, options: Foundation.FileManager.DirectoryEnumerationOptions) throws -> [URL] {
-        return self.contentsOfDirectoryAtURLIncludingPropertiesForKeysOptions?(url, keys, options) ?? []
+        return self.contentsOfDirectoryAtURLIncludingPropertiesForKeysOptions!(url, keys, options)
+    }
+
+    override func fileExists(atPath: String, isDirectory: UnsafeMutablePointer<ObjCBool>?) -> Bool {
+        return self.fileExistsAtPathIsDirectory!(atPath, isDirectory)
+    }
+
+    override func createDirectory(at: URL, withIntermediateDirectories: Bool, attributes: [FileAttributeKey : Any]?) throws {
+        try self.createDirectoryAtURLWithIntermediateDirectoriesAttributes!(at, withIntermediateDirectories, attributes)
     }
 }

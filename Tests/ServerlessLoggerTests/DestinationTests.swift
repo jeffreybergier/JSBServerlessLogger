@@ -32,9 +32,19 @@ import Foundation
 class DestinationTests: XCTestCase {
 
     let mock: MockProtocol.Type = Mock1.self
+    let fm = FileManagerClosureStub()
     lazy var dest = try! Logger.Destination<Event>(configuration: self.mock.configuration)
 
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        ServerlessLogger.FileManager.default = self.fm
+    }
+
     func test_logic_isEnabledFor() {
+        self.fm.fileExistsAtPathIsDirectory = { path, isDirectory in
+            isDirectory!.pointee = true
+            return true
+        }
         XCTAssertFalse(self.dest.isEnabledFor(level: .verbose))
         XCTAssertFalse(self.dest.isEnabledFor(level: .debug))
         XCTAssertFalse(self.dest.isEnabledFor(level: .info))
@@ -45,6 +55,71 @@ class DestinationTests: XCTestCase {
         XCTAssertTrue(self.dest.isEnabledFor(level: .alert))
         XCTAssertTrue(self.dest.isEnabledFor(level: .emergency))
         XCTAssertTrue(self.dest.isEnabledFor(level: .none))
+    }
+
+    func test_logic_init_directoriesExist() {
+        let wait1 = XCTestExpectation()
+        wait1.expectedFulfillmentCount = 3
+        self.fm.fileExistsAtPathIsDirectory = { path, isDirectory in
+            wait1.fulfill()
+            isDirectory!.pointee = true
+            return true
+        }
+        self.fm.createDirectoryAtURLWithIntermediateDirectoriesAttributes = { _, _, _ in
+            XCTFail()
+        }
+        _ = self.dest
+        self.wait(for: [wait1], timeout: 0.0)
+    }
+
+    func test_logic_init_directoriesDontExist() {
+        let wait1 = XCTestExpectation()
+        wait1.expectedFulfillmentCount = 3
+        self.fm.fileExistsAtPathIsDirectory = { path, isDirectory in
+            wait1.fulfill()
+            return false
+        }
+        let wait2 = XCTestExpectation()
+        wait2.expectedFulfillmentCount = 3
+        var wait2Count = 0
+        self.fm.createDirectoryAtURLWithIntermediateDirectoriesAttributes = { url, _, _ in
+            switch wait2Count {
+            case 0:
+                XCTAssertEqual(url, self.mock.configuration.storageLocation.inboxURL)
+            case 1:
+                XCTAssertEqual(url, self.mock.configuration.storageLocation.outboxURL)
+            case 2:
+                XCTAssertEqual(url, self.mock.configuration.storageLocation.sentURL)
+            default:
+                XCTFail()
+            }
+            wait2Count += 1
+            wait2.fulfill()
+        }
+        _ = self.dest
+        self.wait(for: [wait1, wait2], timeout: 0.0)
+    }
+
+    func test_logic_init_error() {
+        let wait1 = XCTestExpectation(description: "fileExistsAtPathIsDirectory")
+        wait1.expectedFulfillmentCount = 1
+        self.fm.fileExistsAtPathIsDirectory = { path, isDirectory in
+            wait1.fulfill()
+            isDirectory!.pointee = false
+            return true
+        }
+        self.fm.createDirectoryAtURLWithIntermediateDirectoriesAttributes = { _, _, _ in
+            XCTFail()
+        }
+        let wait2 = XCTestExpectation(description: "Logger.Destination")
+        do {
+            _ = try Logger.Destination<Event>(configuration: self.mock.configuration)
+            XCTFail()
+        } catch {
+            wait2.fulfill()
+            XCTAssertEqual(error as! Logger.Error, Logger.Error.destinationDirectorySetupError)
+        }
+        self.wait(for: [wait1, wait2], timeout: 0.1)
     }
     
 }
