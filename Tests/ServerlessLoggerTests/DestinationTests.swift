@@ -31,4 +31,20 @@ import Foundation
 
 class DestinationTests: XCTestCase {
 
+    let mock: MockProtocol.Type = Mock1.self
+    lazy var dest = try! Logger.Destination<Event>(configuration: self.mock.configuration)
+
+    func test_logic_isEnabledFor() {
+        XCTAssertFalse(self.dest.isEnabledFor(level: .verbose))
+        XCTAssertFalse(self.dest.isEnabledFor(level: .debug))
+        XCTAssertFalse(self.dest.isEnabledFor(level: .info))
+        XCTAssertFalse(self.dest.isEnabledFor(level: .notice))
+        XCTAssertFalse(self.dest.isEnabledFor(level: .warning))
+        XCTAssertTrue(self.dest.isEnabledFor(level: .error))
+        XCTAssertTrue(self.dest.isEnabledFor(level: .severe))
+        XCTAssertTrue(self.dest.isEnabledFor(level: .alert))
+        XCTAssertTrue(self.dest.isEnabledFor(level: .emergency))
+        XCTAssertTrue(self.dest.isEnabledFor(level: .none))
+    }
+    
 }
