@@ -64,10 +64,13 @@ extension Logger.Monitor: NSFilePresenter {
                                                                     .skipsPackageDescendants,
                                                                     .skipsSubdirectoryDescendants])
             // TODO: Make network requests with URLs
+            let c = NSFileCoordinator(filePresenter: self)
             for sourceURL in inboxLogURLs {
                 let destURL = self.configuration.storageLocation.outboxURL
                                   .appendingPathComponent(sourceURL.lastPathComponent)
-                try fm.moveItem(at: sourceURL, to: destURL)
+                try c.coordinateMoving(from: sourceURL, to: destURL) {
+                    try fm.moveItem(at: $0, to: $1)
+                }
                 self.apiClient.send(payload: destURL)
             }
         } catch {
@@ -82,7 +85,11 @@ extension Logger.Monitor: ServerlessLoggerAPIClientDelegate {
             do {
                 let destURL = self.configuration.storageLocation.sentURL
                                   .appendingPathComponent(sourceURL.lastPathComponent)
-                try FileManager.default.moveItem(at: sourceURL, to: destURL)
+                let c = NSFileCoordinator()
+                let fm = FileManager.default
+                try c.coordinateMoving(from: sourceURL, to: destURL) {
+                    try fm.moveItem(at: $0, to: $1)
+                }
             } catch {
                 NSDebugLog("JSBServerlessLogger: Monitor.didSendURL: \(sourceURL): Failed to move item back to sentbox: \(error)")
             }
@@ -94,7 +101,11 @@ extension Logger.Monitor: ServerlessLoggerAPIClientDelegate {
             do {
                 let destURL = self.configuration.storageLocation.inboxURL
                                   .appendingPathComponent(sourceURL.lastPathComponent)
-                try FileManager.default.moveItem(at: sourceURL, to: destURL)
+                let c = NSFileCoordinator()
+                let fm = FileManager.default
+                try c.coordinateMoving(from: sourceURL, to: destURL) {
+                    try fm.moveItem(at: $0, to: $1)
+                }
             } catch {
                 NSDebugLog("JSBServerlessLogger: Monitor.didFailToSendURL: \(sourceURL): Failed to move item back to inbox: \(error)")
             }
