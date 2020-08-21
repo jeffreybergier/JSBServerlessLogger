@@ -31,13 +31,11 @@ import Foundation
 
 class APIClientMock1Tests: XCTestCase {
 
-    private static let mock = Mock1.self
-    var me: APIClientMock1Tests.Type { type(of: self) }
-
+    let mock: MockProtocol.Type = Mock1.self
     let fm = FileManagerClosureStub()
     let session = URLSessionClosureStub()
     private let sessionDelegate = SessionDelegateStub()
-    lazy var client = Logger.APIClient(configuration: self.me.mock.configuration,
+    lazy var client = Logger.APIClient(configuration: self.mock.configuration,
                                        clientDelegate: nil,
                                        sessionDelegate: self.sessionDelegate)
 
@@ -48,21 +46,21 @@ class APIClientMock1Tests: XCTestCase {
     }
 
     func test_send_secure() {
-        self.fm.contentsAtPath = { _ in self.me.mock.onDisk.first!.1 }
+        self.fm.contentsAtPath = { _ in self.mock.onDisk.first!.1 }
         let wait1 = XCTestExpectation()
         let wait2 = XCTestExpectation()
         self.session.uploadTaskWithRequestFromFile = { request, onDiskURL in
             wait1.fulfill()
             XCTAssertEqual(request.url!.absoluteString,
                            "https://www.this-is-a-test.com?mac=BAlnJZfKW/66t0kguloks5YuDMTRuy3nhUc26YdftBE%3D")
-            XCTAssertEqual(self.me.mock.onDisk.first!.url, onDiskURL)
+            XCTAssertEqual(self.mock.onDisk.first!.url, onDiskURL)
             return FakeUploadTask
         }
         self.session.resumeTask = { _ in
             wait2.fulfill()
         }
         XCTAssertTrue(self.sessionDelegate.inFlight.isEmpty)
-        self.client.send(payload: self.me.mock.onDisk.first!.url)
+        self.client.send(payload: self.mock.onDisk.first!.url)
         XCTAssertEqual(self.sessionDelegate.inFlight.count, 1)
         self.wait(for: [wait1, wait2], timeout: 0.0)
     }
@@ -70,13 +68,11 @@ class APIClientMock1Tests: XCTestCase {
 
 class APIClientMock2Tests: XCTestCase {
 
-    private static let mock = Mock2.self
-    var me: APIClientMock2Tests.Type { type(of: self) }
-
+    let mock: MockProtocol.Type = Mock2.self
     let fm = FileManagerClosureStub()
     let session = URLSessionClosureStub()
     private let sessionDelegate = SessionDelegateStub()
-    lazy var client = Logger.APIClient(configuration: self.me.mock.configuration,
+    lazy var client = Logger.APIClient(configuration: self.mock.configuration,
                                        clientDelegate: nil,
                                        sessionDelegate: self.sessionDelegate)
 
@@ -87,21 +83,21 @@ class APIClientMock2Tests: XCTestCase {
     }
 
     func test_send_insecure() {
-        self.fm.contentsAtPath = { _ in self.me.mock.onDisk.first!.data }
+        self.fm.contentsAtPath = { _ in self.mock.onDisk.first!.data }
         let wait1 = XCTestExpectation()
         let wait2 = XCTestExpectation()
         self.session.uploadTaskWithRequestFromFile = { request, onDiskURL in
             wait1.fulfill()
             XCTAssertEqual(request.url!.absoluteString,
                            "https://www.this-is-a-test.com")
-            XCTAssertEqual(self.me.mock.onDisk.first!.url, onDiskURL)
+            XCTAssertEqual(self.mock.onDisk.first!.url, onDiskURL)
             return FakeUploadTask
         }
         self.session.resumeTask = { _ in
             wait2.fulfill()
         }
         XCTAssertTrue(self.sessionDelegate.inFlight.isEmpty)
-        self.client.send(payload: self.me.mock.onDisk.first!.url)
+        self.client.send(payload: self.mock.onDisk.first!.url)
         XCTAssertEqual(self.sessionDelegate.inFlight.count, 1)
         self.wait(for: [wait1, wait2], timeout: 0.0)
     }
@@ -128,15 +124,13 @@ fileprivate class ClientDelegateStub: ServerlessLoggerAPIClientDelegate {
 
 class APIClientSessionDelegateTests: XCTestCase {
 
-    private static let mock = Mock1.self
-    var me: APIClientSessionDelegateTests.Type { type(of: self) }
-
+    let mock: MockProtocol.Type = Mock1.self
     lazy var sessionDelegate = Logger.APIClient.SessionDelegate(delegate: self.clientDelegate)
     private let clientDelegate = ClientDelegateStub()
 
     func test_didSendSuccessfully() {
-        let remoteURL = self.me.mock.remoteURL.url!
-        let onDiskURL = self.me.mock.onDisk.first!.url
+        let remoteURL = self.mock.remoteURL.url!
+        let onDiskURL = self.mock.onDisk.first!.url
         self.sessionDelegate.inFlight[remoteURL] = onDiskURL
         let wait = XCTestExpectation()
         self.clientDelegate.didSendPayload = { url in
@@ -154,8 +148,8 @@ class APIClientSessionDelegateTests: XCTestCase {
     }
 
     func test_didFail_error() {
-        let remoteURL = self.me.mock.remoteURL.url!
-        let onDiskURL = self.me.mock.onDisk.first!.url
+        let remoteURL = self.mock.remoteURL.url!
+        let onDiskURL = self.mock.onDisk.first!.url
         self.sessionDelegate.inFlight[remoteURL] = onDiskURL
         self.clientDelegate.didSendPayload = { _ in
             XCTFail("Did not expect success")
@@ -174,8 +168,8 @@ class APIClientSessionDelegateTests: XCTestCase {
     }
 
     func test_didFail_statusCode() {
-        let remoteURL = self.me.mock.remoteURL.url!
-        let onDiskURL = self.me.mock.onDisk.first!.url
+        let remoteURL = self.mock.remoteURL.url!
+        let onDiskURL = self.mock.onDisk.first!.url
         self.sessionDelegate.inFlight[remoteURL] = onDiskURL
         self.clientDelegate.didSendPayload = { _ in
             XCTFail("Did not expect success")
