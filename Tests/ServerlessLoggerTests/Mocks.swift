@@ -42,7 +42,7 @@ protocol MockProtocol {
 
 enum Mock1: MockProtocol {
     static let onDisk: [OnDisk] = [
-        (URL(string: "file:///ThisIsMyCoolFile")!, "This is some data from the disk".data(using: .utf8)!)
+        (URL(string: "file:///baseDir/UnitTests/Mock1/Inbox/567890.file")!, "This is some data from the disk".data(using: .utf8)!)
     ]
     static let remoteURL = URLComponents(string: "https://www.this-is-a-test.com")!
     static let symmetricKey = SymmetricKey(data: "Hello World".data(using: .utf8)!)
@@ -59,7 +59,7 @@ enum Mock1: MockProtocol {
 
 enum Mock2: MockProtocol {
     static let onDisk: [OnDisk] = [
-        (URL(string: "file:///ThisIsMyCoolFile")!, "This is some data from the disk".data(using: .utf8)!)
+        (URL(string: "file:///baseDir/UnitTests/Mock2/Inbox/12345.file")!, "This is some data from the disk".data(using: .utf8)!)
     ]
     static let remoteURL = URLComponents(string: "https://www.this-is-a-test.com")!
     static let symmetricKey = SymmetricKey(data: "Hello World".data(using: .utf8)!)

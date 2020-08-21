@@ -31,4 +31,45 @@ import Foundation
 
 class MonitorTests: XCTestCase {
 
+    private let mock = Mock1.self
+
+    let fm = FileManagerClosureStub()
+    lazy var api = APIClientClosureStub(configuration: self.mock.configuration, clientDelegate: nil)
+    lazy var monitor = Logger.Monitor(configuration: self.mock.configuration)
+
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        ServerlessLogger.FileManager.default = self.fm
+        self.monitor.apiClient = self.api
+    }
+
+    func test_presentedItemURL() {
+        XCTAssertEqual(self.monitor.presentedItemURL!,
+                       self.mock.configuration.storageLocation.inboxURL)
+    }
+
+    func test_logic_presentedItemDidChange() {
+        let wait1 = XCTestExpectation(description: "contentsOfDirectoryAtURLIncludingPropertiesForKeysOptions")
+        self.fm.contentsOfDirectoryAtURLIncludingPropertiesForKeysOptions = { url, _, _ in
+            wait1.fulfill()
+            return self.mock.onDisk.map { $0.url }
+        }
+        let wait2 = XCTestExpectation(description: "moveItemAtURLtoURL")
+        self.fm.moveItemAtURLtoURL = { from, to in
+            wait2.fulfill()
+            XCTAssertEqual(self.mock.onDisk.first!.url, from)
+            XCTAssertEqual(from.lastPathComponent, to.lastPathComponent)
+            XCTAssertEqual(to.deletingLastPathComponent(), self.mock.configuration.storageLocation.outboxURL)
+            XCTAssertEqual(from.deletingLastPathComponent(), self.mock.configuration.storageLocation.inboxURL)
+        }
+        let wait3 = XCTestExpectation(description: "sendPayload")
+        self.api.sendPayload = { to in
+            wait3.fulfill()
+            let from = self.mock.onDisk.first!.url
+            XCTAssertEqual(from.lastPathComponent, to.lastPathComponent)
+            XCTAssertEqual(to.deletingLastPathComponent(), self.mock.configuration.storageLocation.outboxURL)
+        }
+        self.monitor.presentedItemDidChange()
+        self.wait(for: [wait1, wait2, wait3], timeout: 0)
+    }
 }

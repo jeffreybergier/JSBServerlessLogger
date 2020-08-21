@@ -45,13 +45,13 @@ public protocol ServerlessLoggerAPISessionDelegate: URLSessionTaskDelegate {
 }
 
 extension Logger  {
-    public class APIClient {
+    open class APIClient {
         
         public let configuration: ServerlessLoggerConfigurationProtocol
         private let session: URLSessionProtocol
         private let sessionDelegate: ServerlessLoggerAPISessionDelegate
         
-        init(configuration: ServerlessLoggerConfigurationProtocol,
+        public init(configuration: ServerlessLoggerConfigurationProtocol,
              clientDelegate: ServerlessLoggerAPIClientDelegate?,
              sessionDelegate: ServerlessLoggerAPISessionDelegate? = nil)
         {
@@ -77,7 +77,7 @@ extension Logger  {
             self.sessionDelegate = sessionDelegate
         }
         
-        func send(payload onDiskURL: URL) {
+        open func send(payload onDiskURL: URL) {
             autoreleasepool {
                 var components = self.configuration.endpointURL
                 if #available(iOS 13.0, OSX 10.15, watchOS 6.0, tvOS 13.0, *),

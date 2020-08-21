@@ -28,6 +28,9 @@
 import Foundation
 
 extension Logger {
+    /// `Logger.Monitor` is responsible for monitoring files in the inbox.
+    /// Also it moves files around appropriately when sending from the Outbox
+    /// or placing things into Sent once they have been sent
     open class Monitor: NSObject {
         
         open var presentedItemURL: URL? { self.configuration.storageLocation.inboxURL }
@@ -38,7 +41,10 @@ extension Logger {
         }()
         
         public let configuration: ServerlessLoggerConfigurationProtocol
-        private lazy var apiClient = APIClient(configuration: self.configuration, clientDelegate: self)
+
+        // Internal for testing only
+        internal lazy var apiClient = APIClient(configuration: self.configuration, clientDelegate: self)
+        
         private lazy var _presentedItemOperationQueue = DispatchQueue(label: configuration.identifier  + "Monitor",
                                                                       qos: .utility)
         
