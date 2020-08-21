@@ -51,25 +51,69 @@ class MonitorTests: XCTestCase {
     func test_logic_presentedItemDidChange() {
         let wait1 = XCTestExpectation(description: "contentsOfDirectoryAtURLIncludingPropertiesForKeysOptions")
         self.fm.contentsOfDirectoryAtURLIncludingPropertiesForKeysOptions = { url, _, _ in
-            wait1.fulfill()
+            DispatchQueue.main.async { wait1.fulfill() }
             return self.mock.onDisk.map { $0.url }
         }
         let wait2 = XCTestExpectation(description: "moveItemAtURLtoURL")
         self.fm.moveItemAtURLtoURL = { from, to in
-            wait2.fulfill()
-            XCTAssertEqual(self.mock.onDisk.first!.url, from)
-            XCTAssertEqual(from.lastPathComponent, to.lastPathComponent)
-            XCTAssertEqual(to.deletingLastPathComponent(), self.mock.configuration.storageLocation.outboxURL)
-            XCTAssertEqual(from.deletingLastPathComponent(), self.mock.configuration.storageLocation.inboxURL)
+            DispatchQueue.main.async {
+                wait2.fulfill()
+                XCTAssertEqual(self.mock.onDisk.first!.url, from)
+                XCTAssertEqual(from.lastPathComponent, to.lastPathComponent)
+                XCTAssertEqual(to.deletingLastPathComponent(), self.mock.configuration.storageLocation.outboxURL)
+                XCTAssertEqual(from.deletingLastPathComponent(), self.mock.configuration.storageLocation.inboxURL)
+            }
         }
         let wait3 = XCTestExpectation(description: "sendPayload")
         self.api.sendPayload = { to in
-            wait3.fulfill()
-            let from = self.mock.onDisk.first!.url
-            XCTAssertEqual(from.lastPathComponent, to.lastPathComponent)
-            XCTAssertEqual(to.deletingLastPathComponent(), self.mock.configuration.storageLocation.outboxURL)
+            DispatchQueue.main.async {
+                wait3.fulfill()
+                let from = self.mock.onDisk.first!.url
+                XCTAssertEqual(from.lastPathComponent, to.lastPathComponent)
+                XCTAssertEqual(to.deletingLastPathComponent(), self.mock.configuration.storageLocation.outboxURL)
+            }
         }
         self.monitor.presentedItemDidChange()
-        self.wait(for: [wait1, wait2, wait3], timeout: 0)
+        self.wait(for: [wait1, wait2, wait3], timeout: 0.1)
+    }
+
+    func test_logic_didSend() {
+        let wait1 = XCTestExpectation(description: "moveItemAtURLtoURL")
+        self.fm.moveItemAtURLtoURL = { from, to in
+            DispatchQueue.main.async {
+                wait1.fulfill()
+                // check that the file names match
+                XCTAssertEqual(self.mock.onDisk.first!.url.lastPathComponent, from.lastPathComponent)
+                XCTAssertEqual(from.lastPathComponent, to.lastPathComponent)
+                // check that from is the outbox
+                XCTAssertEqual(from.deletingLastPathComponent(), self.mock.configuration.storageLocation.outboxURL)
+                // check that to is the sent
+                XCTAssertEqual(to.deletingLastPathComponent(), self.mock.configuration.storageLocation.sentURL)
+            }
+        }
+        let payload = self.mock.configuration.storageLocation.outboxURL
+                          .appendingPathComponent(self.mock.onDisk.first!.url.lastPathComponent)
+        self.monitor.didSend(payload: payload)
+        self.wait(for: [wait1], timeout: 0.1)
+    }
+
+    func test_logic_didFailToSend() {
+        let wait1 = XCTestExpectation(description: "moveItemAtURLtoURL")
+        self.fm.moveItemAtURLtoURL = { from, to in
+            DispatchQueue.main.async {
+                wait1.fulfill()
+                // check that the file names match
+                XCTAssertEqual(self.mock.onDisk.first!.url.lastPathComponent, from.lastPathComponent)
+                XCTAssertEqual(from.lastPathComponent, to.lastPathComponent)
+                // check that from is the outbox
+                XCTAssertEqual(from.deletingLastPathComponent(), self.mock.configuration.storageLocation.outboxURL)
+                // check that to is the inbox
+                XCTAssertEqual(to.deletingLastPathComponent(), self.mock.configuration.storageLocation.inboxURL)
+            }
+        }
+        let payload = self.mock.configuration.storageLocation.outboxURL
+                          .appendingPathComponent(self.mock.onDisk.first!.url.lastPathComponent)
+        self.monitor.didFailToSend(payload: payload)
+        self.wait(for: [wait1], timeout: 0.1)
     }
 }
