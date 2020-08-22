@@ -57,7 +57,12 @@ import Foundation
 }
 
 internal enum FileManager {
-    static var `default`: FileManagerProtocol = Foundation.FileManager.default
+    internal static var `default`: FileManagerProtocol! = {
+        #if DEBUG
+        guard !IS_TESTING else { return nil }
+        #endif
+        return Foundation.FileManager.default
+    }()
 }
 
 extension Foundation.FileManager: FileManagerProtocol { }

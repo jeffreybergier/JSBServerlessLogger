@@ -56,7 +56,7 @@ extension Logger {
 
 extension Logger.Monitor: NSFilePresenter {
     open func presentedItemDidChange() {
-        let fm = FileManager.default
+        let fm = FileManager.default!
         do {
             let inboxLogURLs = try fm.contentsOfDirectory(at: self.configuration.storageLocation.inboxURL,
                                                           includingPropertiesForKeys: nil,
@@ -86,7 +86,7 @@ extension Logger.Monitor: ServerlessLoggerAPIClientDelegate {
                 let destURL = self.configuration.storageLocation.sentURL
                                   .appendingPathComponent(sourceURL.lastPathComponent)
                 let c = NSFileCoordinator.new()
-                let fm = FileManager.default
+                let fm = FileManager.default!
                 try c.coordinateMoving(from: sourceURL, to: destURL) {
                     try fm.moveItem(at: $0, to: $1)
                 }
@@ -102,7 +102,7 @@ extension Logger.Monitor: ServerlessLoggerAPIClientDelegate {
                 let destURL = self.configuration.storageLocation.inboxURL
                                   .appendingPathComponent(sourceURL.lastPathComponent)
                 let c = NSFileCoordinator.new()
-                let fm = FileManager.default
+                let fm = FileManager.default!
                 try c.coordinateMoving(from: sourceURL, to: destURL) {
                     try fm.moveItem(at: $0, to: $1)
                 }

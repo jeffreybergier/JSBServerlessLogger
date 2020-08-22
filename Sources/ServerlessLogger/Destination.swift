@@ -88,7 +88,7 @@ extension Logger {
         // MARK: Destination Setup
         
         private func createDirectoryStructureIfNeeded() throws {
-            let fm = FileManager.default
+            let fm = FileManager.default!
             let createDir: ((URL) throws -> Void) = { url in
                 var isDirectory = ObjCBool.init(false)
                 let exists = fm.fileExists(atPath: url.path, isDirectory: &isDirectory)
