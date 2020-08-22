@@ -29,11 +29,9 @@ import XCTest
 import Foundation
 @testable import ServerlessLogger
 
-class DestinationTests: XCTestCase {
+class DestinationTests: ParentTest {
 
     let mock: MockProtocol.Type = Mock1.self
-    let fm = FileManagerClosureStub()
-    let coor = NSFileCoordinatorClosureStub()
 
     lazy var dest = try! Logger.Destination<Event>(configuration: self.mock.configuration)
 

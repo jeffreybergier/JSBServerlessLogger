@@ -29,12 +29,10 @@ import XCTest
 import Foundation
 @testable import ServerlessLogger
 
-class MonitorTests: XCTestCase {
+class MonitorTests: ParentTest {
 
     private let mock = Mock1.self
 
-    let coor = NSFileCoordinatorClosureStub()
-    let fm = FileManagerClosureStub()
     lazy var api = APIClientClosureStub(configuration: self.mock.configuration, clientDelegate: nil)
     lazy var monitor = Logger.Monitor(configuration: self.mock.configuration)
 

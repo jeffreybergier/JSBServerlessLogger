@@ -29,11 +29,9 @@ import XCTest
 import Foundation
 @testable import ServerlessLogger
 
-class APIClientMock1Tests: XCTestCase {
+class APIClientMock1Tests: ParentTest {
 
     let mock: MockProtocol.Type = Mock1.self
-    let fm = FileManagerClosureStub()
-    let session = URLSessionClosureStub()
     private let sessionDelegate = SessionDelegateStub()
     lazy var client = Logger.APIClient(configuration: self.mock.configuration,
                                        clientDelegate: nil,
@@ -66,11 +64,9 @@ class APIClientMock1Tests: XCTestCase {
     }
 }
 
-class APIClientMock2Tests: XCTestCase {
+class APIClientMock2Tests: ParentTest {
 
     let mock: MockProtocol.Type = Mock2.self
-    let fm = FileManagerClosureStub()
-    let session = URLSessionClosureStub()
     private let sessionDelegate = SessionDelegateStub()
     lazy var client = Logger.APIClient(configuration: self.mock.configuration,
                                        clientDelegate: nil,
@@ -122,7 +118,7 @@ fileprivate class ClientDelegateStub: ServerlessLoggerAPIClientDelegate {
     }
 }
 
-class APIClientSessionDelegateTests: XCTestCase {
+class APIClientSessionDelegateTests: ParentTest {
 
     let mock: MockProtocol.Type = Mock1.self
     lazy var sessionDelegate = Logger.APIClient.SessionDelegate(delegate: self.clientDelegate)
