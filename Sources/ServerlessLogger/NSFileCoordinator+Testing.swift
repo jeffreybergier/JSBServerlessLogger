@@ -27,13 +27,12 @@
 
 import Foundation
 
+#if DEBUG
+
 internal protocol NSFileCoordinatorProtocol: class {
-
     static func addFilePresenter(_ filePresenter: NSFilePresenter)
-
-    func coordinateMoving(from: URL, to: URL, accessor: (URL, URL) throws -> Void) throws
-
     func coordinate(writingItemAt: URL, options: Foundation.NSFileCoordinator.WritingOptions, writingItemAt: URL, options: Foundation.NSFileCoordinator.WritingOptions, error: NSErrorPointer, byAccessor: (URL, URL) -> Void)
+    func coordinateMoving(from: URL, to: URL, accessor: (URL, URL) throws -> Void) throws
 }
 
 internal enum NSFileCoordinator {
@@ -42,17 +41,22 @@ internal enum NSFileCoordinator {
         Foundation.NSFileCoordinator.addFilePresenter(filePresenter)
     }
 
-    #if DEBUG
     internal static var testReplacement: NSFileCoordinatorProtocol?
-    #endif
 
     static func new(filePresenter: NSFilePresenter? = nil) -> NSFileCoordinatorProtocol
     {
-        #if DEBUG
         if let testReplacement = self.testReplacement { return testReplacement }
-        #endif
         return Foundation.NSFileCoordinator(filePresenter: filePresenter)
     }
 }
 
 extension Foundation.NSFileCoordinator: NSFileCoordinatorProtocol { }
+
+#endif
+
+extension Foundation.NSFileCoordinator {
+    internal static func new(filePresenter: NSFilePresenter? = nil) -> Foundation.NSFileCoordinator
+    {
+        return Foundation.NSFileCoordinator(filePresenter: filePresenter)
+    }
+}
