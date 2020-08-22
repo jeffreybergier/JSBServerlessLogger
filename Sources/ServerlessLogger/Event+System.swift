@@ -64,6 +64,12 @@ internal var vmMemoryCount: (free: Int, used: Int, total: Int)? {
 
 internal var diskResourceValues: URLResourceValues? {
     let fm = FileManager.default!
-    let dir = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+    var isTesting = false
+    #if DEBUG
+    isTesting = IS_TESTING
+    #endif
+    let dir = isTesting
+        ? URL(string: "file:///")
+        : fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
     return try? dir?.resourceValues(forKeys: [.volumeAvailableCapacityKey, .volumeTotalCapacityKey])
 }

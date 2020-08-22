@@ -73,6 +73,8 @@ class FileManagerClosureStub: FileManagerStubParent {
 
     var createDirectoryAtURLWithIntermediateDirectoriesAttributes: ((URL, Bool, [FileAttributeKey : Any]?) throws -> Void)?
 
+    var createFileAtPathWithContentsAttributes: ((String, Data?, [FileAttributeKey : Any]?) -> Bool)?
+
     override func contents(atPath: String) -> Data? {
         return self.contentsAtPath!(atPath)
     }
@@ -91,5 +93,9 @@ class FileManagerClosureStub: FileManagerStubParent {
 
     override func createDirectory(at: URL, withIntermediateDirectories: Bool, attributes: [FileAttributeKey : Any]?) throws {
         try self.createDirectoryAtURLWithIntermediateDirectoriesAttributes!(at, withIntermediateDirectories, attributes)
+    }
+
+    override func createFile(atPath: String, contents: Data?, attributes: [FileAttributeKey : Any]?) -> Bool {
+        return self.createFileAtPathWithContentsAttributes!(atPath, contents, attributes)
     }
 }
