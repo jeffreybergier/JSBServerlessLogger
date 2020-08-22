@@ -33,6 +33,7 @@ class MonitorTests: XCTestCase {
 
     private let mock = Mock1.self
 
+    let coor = NSFileCoordinatorClosureStub()
     let fm = FileManagerClosureStub()
     lazy var api = APIClientClosureStub(configuration: self.mock.configuration, clientDelegate: nil)
     lazy var monitor = Logger.Monitor(configuration: self.mock.configuration)
@@ -40,6 +41,7 @@ class MonitorTests: XCTestCase {
     override func setUpWithError() throws {
         try super.setUpWithError()
         ServerlessLogger.FileManager.default = self.fm
+        ServerlessLogger.NSFileCoordinator.testReplacement = self.coor
         self.monitor.apiClient = self.api
     }
 
@@ -73,8 +75,13 @@ class MonitorTests: XCTestCase {
                 XCTAssertEqual(to.deletingLastPathComponent(), self.mock.configuration.storageLocation.outboxURL)
             }
         }
+        let wait4 = XCTestExpectation(description: "coordinateMovingFromURLToURLByAccessor")
+        self.coor.coordinateMovingFromURLToURLByAccessor = { from, to, accessor in
+            wait4.fulfill()
+            try accessor(from, to)
+        }
         self.monitor.presentedItemDidChange()
-        self.wait(for: [wait1, wait2, wait3], timeout: 0.1)
+        self.wait(for: [wait1, wait2, wait3, wait4], timeout: 0.1)
     }
 
     func test_logic_didSend() {
@@ -91,10 +98,15 @@ class MonitorTests: XCTestCase {
                 XCTAssertEqual(to.deletingLastPathComponent(), self.mock.configuration.storageLocation.sentURL)
             }
         }
+        let wait2 = XCTestExpectation(description: "coordinateMovingFromURLToURLByAccessor")
+        self.coor.coordinateMovingFromURLToURLByAccessor = { from, to, accessor in
+            wait2.fulfill()
+            try accessor(from, to)
+        }
         let payload = self.mock.configuration.storageLocation.outboxURL
                           .appendingPathComponent(self.mock.onDisk.first!.url.lastPathComponent)
         self.monitor.didSend(payload: payload)
-        self.wait(for: [wait1], timeout: 0.1)
+        self.wait(for: [wait1, wait2], timeout: 0.1)
     }
 
     func test_logic_didFailToSend() {
@@ -111,9 +123,14 @@ class MonitorTests: XCTestCase {
                 XCTAssertEqual(to.deletingLastPathComponent(), self.mock.configuration.storageLocation.inboxURL)
             }
         }
+        let wait2 = XCTestExpectation(description: "coordinateMovingFromURLToURLByAccessor")
+        self.coor.coordinateMovingFromURLToURLByAccessor = { from, to, accessor in
+            wait2.fulfill()
+            try accessor(from, to)
+        }
         let payload = self.mock.configuration.storageLocation.outboxURL
                           .appendingPathComponent(self.mock.onDisk.first!.url.lastPathComponent)
         self.monitor.didFailToSend(payload: payload)
-        self.wait(for: [wait1], timeout: 0.1)
+        self.wait(for: [wait1, wait2], timeout: 0.1)
     }
 }

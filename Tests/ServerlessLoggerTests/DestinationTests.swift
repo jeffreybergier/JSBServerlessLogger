@@ -33,11 +33,14 @@ class DestinationTests: XCTestCase {
 
     let mock: MockProtocol.Type = Mock1.self
     let fm = FileManagerClosureStub()
+    let coor = NSFileCoordinatorClosureStub()
+
     lazy var dest = try! Logger.Destination<Event>(configuration: self.mock.configuration)
 
     override func setUpWithError() throws {
         try super.setUpWithError()
         ServerlessLogger.FileManager.default = self.fm
+        ServerlessLogger.NSFileCoordinator.testReplacement = self.coor
     }
 
     func test_logic_isEnabledFor() {
@@ -96,8 +99,13 @@ class DestinationTests: XCTestCase {
             wait2Count += 1
             wait2.fulfill()
         }
+        let wait3 = XCTestExpectation(description: "Verify this object is added as a File Presenter")
+        type(of: self.coor).addFilePresenter = { input in
+            wait3.fulfill()
+            XCTAssertTrue(input.isKind(of: Logger.Monitor.self))
+        }
         _ = self.dest
-        self.wait(for: [wait1, wait2], timeout: 0.0)
+        self.wait(for: [wait1, wait2, wait3], timeout: 0.0)
     }
 
     func test_logic_init_error() {
