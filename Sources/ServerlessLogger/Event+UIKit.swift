@@ -74,7 +74,7 @@ extension UIDevice.BatteryState {
 #else
 
 extension Event {
-    public struct DeviceDetails: Codable {
+    public struct DeviceDetails: Codable, Equatable {
         
         public var storageRemaining: Int
         public var storageTotal: Int

@@ -83,19 +83,24 @@ extension Logger {
 
         open func process(logDetails: LogDetails) {
             let event = T(configuration: self.configuration, details: logDetails)
-            // TODO: Remove Try!
-            try! self.appendToInbox(event)
+            self.appendToInbox(event)
         }
         
-        open func appendToInbox(_ event: T) throws {
-            let jsonData = try JSONEncoder().encode(event)
-            let destURL = self.configuration.storageLocation.inboxURL
-                              .appendingPathComponent(UUID().uuidString + ".event.json")
-            let success = FileManager.default.createFile(atPath: destURL.path,
-                                                         contents: jsonData,
-                                                         attributes: nil)
-            guard !success else { return }
-            throw Error.writeToInboxError
+        open func appendToInbox(_ event: T) {
+            do {
+                let jsonData = try JSONEncoder().encode(event)
+                let destURL = self.configuration.storageLocation.inboxURL
+                                  .appendingPathComponent(UUID().uuidString + ".event.json")
+                let success = FileManager.default.createFile(atPath: destURL.path,
+                                                             contents: jsonData,
+                                                             attributes: nil)
+                guard !success else { return }
+                self.configuration.errorDelegate?.error(Error.writeToInboxError(destURL, jsonData),
+                                                        ocurredInLoggerWithConfiguration: self.configuration)
+            } catch {
+                self.configuration.errorDelegate?.error(Error.codableError(error as NSError),
+                                                        ocurredInLoggerWithConfiguration: self.configuration)
+            }
         }
         
         // MARK: Destination Setup
@@ -106,10 +111,14 @@ extension Logger {
                 var isDirectory = ObjCBool.init(false)
                 let exists = fm.fileExists(atPath: url.path, isDirectory: &isDirectory)
                 if exists && !isDirectory.boolValue {
-                    throw Error.destinationDirectorySetupError
+                    throw Error.destinationDirectorySetupError(nil)
                 }
                 if !exists {
-                    try fm.createDirectory(at: url, withIntermediateDirectories: true, attributes: nil)
+                    do {
+                        try fm.createDirectory(at: url, withIntermediateDirectories: true, attributes: nil)
+                    } catch {
+                        throw Error.destinationDirectorySetupError(error as NSError)
+                    }
                 }
             }
             try createDir(self.configuration.storageLocation.inboxURL)

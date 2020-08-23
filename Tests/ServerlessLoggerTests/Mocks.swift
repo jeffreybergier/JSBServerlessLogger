@@ -37,7 +37,8 @@ protocol MockProtocol {
     static var onDisk: [OnDisk] { get }
     static var remoteURL: URLComponents { get }
     static var symmetricKey: SymmetricKey { get }
-    static var configuration: ServerlessLoggerConfigurationProtocol { get }
+    static var event: Event { get }
+    static var configuration: ServerlessLoggerConfigurationProtocol { get set }
 }
 
 enum Mock1: MockProtocol {
@@ -46,7 +47,7 @@ enum Mock1: MockProtocol {
     ]
     static let remoteURL = URLComponents(string: "https://www.this-is-a-test.com")!
     static let symmetricKey = SymmetricKey(data: "Hello World".data(using: .utf8)!)
-    static let configuration: ServerlessLoggerConfigurationProtocol = {
+    static var configuration: ServerlessLoggerConfigurationProtocol = {
         let s = Logger.StorageLocation(baseDirectory: URL(string: "file:///baseDir")!,
                                        appName: "UnitTests",
                                        parentDirectory: "Mock1")
@@ -56,6 +57,20 @@ enum Mock1: MockProtocol {
         c.logLevel = .error
         return c
     }()
+    static var event: Event = {
+        let details = ServerlessLogger.Event.JSBLogDetails(level: .debug,
+                                                           date: Date(),
+                                                           message: "Mock1EventMessage",
+                                                           functionName: "Mock1FunctionName",
+                                                           fileName: "Mock1FileName",
+                                                           lineNumber: 1000)
+        let event = ServerlessLogger.Event(incident: "Mock1Incident",
+                                           logDetails: details,
+                                           deviceDetails: .init(),
+                                           errorDetails: nil,
+                                           extraDetails: nil)
+        return event
+    }()
 }
 
 enum Mock2: MockProtocol {
@@ -64,13 +79,27 @@ enum Mock2: MockProtocol {
     ]
     static let remoteURL = URLComponents(string: "https://www.this-is-a-test.com")!
     static let symmetricKey = SymmetricKey(data: "Hello World".data(using: .utf8)!)
-    static let configuration: ServerlessLoggerConfigurationProtocol = {
+    static var configuration: ServerlessLoggerConfigurationProtocol = {
         let s = Logger.StorageLocation(baseDirectory: URL(string: "file:///baseDir")!,
                                        appName: "UnitTests",
                                        parentDirectory: "Mock2")
         var c = Logger.DefaultInsecureConfiguration(endpointURL: remoteURL, storageLocation: s)
         c.logLevel = .debug
         return c
+    }()
+    static var event: Event = {
+        let details = Event.JSBLogDetails(level: .debug,
+                                          date: Date(),
+                                          message: "Mock2EventMessage",
+                                          functionName: "Mock2FunctionName",
+                                          fileName: "Mock2FileName",
+                                          lineNumber: 1000)
+        let event = Event(incident: "Mock2Incident",
+                          logDetails: details,
+                          deviceDetails: .init(),
+                          errorDetails: nil,
+                          extraDetails: nil)
+        return event
     }()
 }
 

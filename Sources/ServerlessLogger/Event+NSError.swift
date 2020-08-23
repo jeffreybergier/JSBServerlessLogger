@@ -28,7 +28,7 @@
 import Foundation
 
 extension Event {
-    public struct ErrorDetails: Codable {
+    public struct ErrorDetails: Codable, Equatable {
         
         public var code: Int
         public var domain: String

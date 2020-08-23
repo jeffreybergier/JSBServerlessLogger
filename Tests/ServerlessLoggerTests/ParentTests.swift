@@ -33,18 +33,26 @@ class ParentTest: XCTestCase {
     var fm: FileManagerClosureStub!
     var coor: NSFileCoordinatorClosureStub!
     var session: URLSessionClosureStub!
+    var errorDelegate: ErrorDelegateClosureStub!
 
     override func setUpWithError() throws {
         try super.setUpWithError()
         let fm = FileManagerClosureStub()
         let session = URLSessionClosureStub()
         let coor = NSFileCoordinatorClosureStub()
+        let error = ErrorDelegateClosureStub()
         ServerlessLogger.FileManager.default = fm
         ServerlessLogger.URLSession.testReplacement = session
         ServerlessLogger.NSFileCoordinator.testReplacement = coor
         self.fm = fm
         self.session = session
         self.coor = coor
+        self.errorDelegate = error
+        error.errorConfiguration = { error, _ in
+            XCTFail("Unexpected error ocurred: \(error)")
+        }
+        Mock1.configuration.errorDelegate = error
+        Mock2.configuration.errorDelegate = error
     }
 
     override func tearDownWithError() throws {
@@ -54,6 +62,10 @@ class ParentTest: XCTestCase {
         ServerlessLogger.NSFileCoordinator.testReplacement = nil
         self.fm = nil
         self.session = nil
+        type(of: self.coor!).addFilePresenter = nil
         self.coor = nil
+        self.errorDelegate = nil
+        Mock1.configuration.errorDelegate = nil
+        Mock2.configuration.errorDelegate = nil
     }
 }

@@ -38,7 +38,7 @@ extension Event: ServerlessLoggerEventProtocol {
         self.extraDetails = configuration.extraDetails
     }
     
-    public struct JSBLogDetails: Codable {
+    public struct JSBLogDetails: Codable, Equatable {
         
         public var level: XCGLogger.Level
         public var date: Date
@@ -55,6 +55,21 @@ extension Event: ServerlessLoggerEventProtocol {
             self.functionName = input.functionName
             self.fileName     = input.fileName
             self.lineNumber   = input.lineNumber
+        }
+
+        public init(level: XCGLogger.Level,
+                    date: Date,
+                    message: String,
+                    functionName: String,
+                    fileName: String,
+                    lineNumber: Int)
+        {
+            self.level        = level
+            self.date         = date
+            self.message      = message
+            self.functionName = functionName
+            self.fileName     = fileName
+            self.lineNumber   = lineNumber
             // swiftlint:enable operator_usage_whitespace
         }
     }

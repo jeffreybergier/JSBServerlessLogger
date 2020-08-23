@@ -27,7 +27,7 @@
 
 import Foundation
 
-public struct Event: Codable {
+public struct Event: Codable, Equatable {
     
     public static let kErrorKey = "JSBServerlessLoggerErrorKey"
     
@@ -39,7 +39,7 @@ public struct Event: Codable {
 }
 
 extension Event {
-    public struct ExtraDetails: Codable {
+    public struct ExtraDetails: Codable, Equatable {
         var userID: String?
         var userInfo: [String: String]? // TODO: Replace value type with anything codable
     }

@@ -52,8 +52,12 @@ class LoggerMock1Tests: ParentTest {
             XCTAssertEqual(event.errorDetails!.domain, "Test")
             return true
         }
+        let wait3 = XCTestExpectation()
+        type(of: self.coor!).addFilePresenter = { _ in
+            wait3.fulfill()
+        }
         self.log.error(NSError(domain: "Test", code: -4444, userInfo: nil))
-        self.wait(for: [wait1, wait2], timeout: 0.0)
+        self.wait(for: [wait1, wait2, wait3], timeout: 0.0)
     }
 
     func test_logDebug() {
@@ -67,8 +71,12 @@ class LoggerMock1Tests: ParentTest {
             XCTFail()
             return true
         }
+        let wait2 = XCTestExpectation()
+        type(of: self.coor!).addFilePresenter = { _ in
+            wait2.fulfill()
+        }
         self.log.debug(NSError(domain: "Test", code: -4444, userInfo: nil))
-        self.wait(for: [wait1], timeout: 0.0)
+        self.wait(for: [wait1, wait2], timeout: 0.0)
     }
 }
 
@@ -95,8 +103,12 @@ class LoggerMock2Tests: ParentTest {
             XCTAssertEqual(event.errorDetails!.domain, "Test")
             return true
         }
+        let wait3 = XCTestExpectation()
+        type(of: self.coor!).addFilePresenter = { _ in
+            wait3.fulfill()
+        }
         self.log.debug(NSError(domain: "Test", code: -4444, userInfo: nil))
-        self.wait(for: [wait1, wait2], timeout: 0.0)
+        self.wait(for: [wait1, wait2, wait3], timeout: 0.0)
     }
 
     func test_logVerbose() {
@@ -110,7 +122,11 @@ class LoggerMock2Tests: ParentTest {
             XCTFail()
             return true
         }
+        let wait2 = XCTestExpectation()
+        type(of: self.coor!).addFilePresenter = { _ in
+            wait2.fulfill()
+        }
         self.log.verbose(NSError(domain: "Test", code: -4444, userInfo: nil))
-        self.wait(for: [wait1], timeout: 0.0)
+        self.wait(for: [wait1, wait2], timeout: 0.0)
     }
 }

@@ -1,5 +1,5 @@
 //
-//  Created by Jeffrey Bergier on 2020/08/13.
+//  Created by Jeffrey Bergier on 2020/08/23.
 //
 //  MIT License
 //
@@ -25,33 +25,13 @@
 //
 //
 
+import XCTest
 import Foundation
+import ServerlessLogger
 
-public protocol ServerlessLoggerErrorDelegate: class {
-    func error(_: Logger.Error, ocurredInLoggerWithConfiguration: ServerlessLoggerConfigurationProtocol)
-}
-
-extension Logger {
-    public enum Error: CustomNSError {
-
-        // MARK: Errors
-        case destinationDirectorySetupError(NSError?)
-        case writeToInboxError(URL, Data)
-        case codableError(NSError)
-
-        // MARK: Protocol Conformance
-        public static let errorDomain: String = "JSBServerlessLoggerErrorDomain"
-        public var errorCode: Int {
-            switch self {
-            case .destinationDirectorySetupError:
-                return -1000
-            case .writeToInboxError:
-                return -1001
-            case .codableError:
-                return -1002
-            }
-        }
-        
-        public var errorUserInfo: [String : Any] { return [:] }
+class ErrorDelegateClosureStub: ServerlessLoggerErrorDelegate {
+    var errorConfiguration: ((Logger.Error, ServerlessLoggerConfigurationProtocol) -> Void)?
+    func error(_ error: Logger.Error, ocurredInLoggerWithConfiguration configuration: ServerlessLoggerConfigurationProtocol) {
+        self.errorConfiguration!(error, configuration)
     }
 }

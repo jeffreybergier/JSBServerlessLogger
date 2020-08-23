@@ -28,10 +28,6 @@
 import XCGLogger
 import Foundation
 
-public protocol ServerlessLoggerErrorDelegate: class {
-    func error(_: Logger.Error, ocurredInLoggerWithConfiguration: ServerlessLoggerConfigurationProtocol)
-}
-
 open class Logger: XCGLogger {
     
     public let configuration: ServerlessLoggerConfigurationProtocol
