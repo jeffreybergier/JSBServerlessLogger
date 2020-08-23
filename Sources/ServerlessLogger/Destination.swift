@@ -95,11 +95,13 @@ extension Logger {
                                                              contents: jsonData,
                                                              attributes: nil)
                 guard !success else { return }
+                NSDebugLog("JSBServerlessLogger: Error Writing To Inbox: \(event)")
                 self.configuration.errorDelegate?.logger(
                     with: self.configuration,
                     produced: .addToInbox(destURL, jsonData)
                 )
             } catch {
+                NSDebugLog("JSBServerlessLogger: Error Encoding Event: \(event)")
                 self.configuration.errorDelegate?.logger(
                     with: self.configuration,
                     produced: .codable(error as NSError)
@@ -115,12 +117,14 @@ extension Logger {
                 var isDirectory = ObjCBool.init(false)
                 let exists = fm.fileExists(atPath: url.path, isDirectory: &isDirectory)
                 if exists && !isDirectory.boolValue {
+                    NSDebugLog("JSBServerlessLogger: File exists where directory should be: \(url)")
                     throw Error.storageLocationCreate(nil)
                 }
                 if !exists {
                     do {
                         try fm.createDirectory(at: url, withIntermediateDirectories: true, attributes: nil)
                     } catch {
+                        NSDebugLog("JSBServerlessLogger: Failed to create directory: \(url)")
                         throw Error.storageLocationCreate(error as NSError)
                     }
                 }
