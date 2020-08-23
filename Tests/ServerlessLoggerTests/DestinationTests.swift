@@ -135,7 +135,7 @@ class DestinationTests: ParentTest {
             XCTFail()
         } catch {
             wait2.fulfill()
-            if case Logger.Error.destinationDirectorySetupError = error as! Logger.Error
+            if case .storageLocationCreate = error as! Logger.Error
             { return }
             else { XCTFail(String(describing: error)) }
         }
@@ -185,9 +185,9 @@ class DestinationTests: ParentTest {
             return false
         }
         let wait4 = XCTestExpectation()
-        self.errorDelegate.errorConfiguration = { error, _ in
+        self.errorDelegate.error = { error, _ in
             wait4.fulfill()
-            if case .writeToInboxError(let url, _) = error {
+            if case .addToInbox(let url, _) = error {
                 XCTAssertEqual(url.deletingLastPathComponent(), self.mock.configuration.storageLocation.inboxURL)
             } else {
                 XCTFail("Wrong Error: \(error)")

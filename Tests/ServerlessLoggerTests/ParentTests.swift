@@ -48,7 +48,7 @@ class ParentTest: XCTestCase {
         self.session = session
         self.coor = coor
         self.errorDelegate = error
-        error.errorConfiguration = { error, _ in
+        error.error = { error, _ in
             XCTFail("Unexpected error ocurred: \(error)")
         }
         Mock1.configuration.errorDelegate = error

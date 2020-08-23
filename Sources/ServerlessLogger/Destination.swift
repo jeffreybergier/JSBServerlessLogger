@@ -95,11 +95,15 @@ extension Logger {
                                                              contents: jsonData,
                                                              attributes: nil)
                 guard !success else { return }
-                self.configuration.errorDelegate?.error(Error.writeToInboxError(destURL, jsonData),
-                                                        ocurredInLoggerWithConfiguration: self.configuration)
+                self.configuration.errorDelegate?.logger(
+                    with: self.configuration,
+                    produced: .addToInbox(destURL, jsonData)
+                )
             } catch {
-                self.configuration.errorDelegate?.error(Error.codableError(error as NSError),
-                                                        ocurredInLoggerWithConfiguration: self.configuration)
+                self.configuration.errorDelegate?.logger(
+                    with: self.configuration,
+                    produced: .codable(error as NSError)
+                )
             }
         }
         
@@ -111,13 +115,13 @@ extension Logger {
                 var isDirectory = ObjCBool.init(false)
                 let exists = fm.fileExists(atPath: url.path, isDirectory: &isDirectory)
                 if exists && !isDirectory.boolValue {
-                    throw Error.destinationDirectorySetupError(nil)
+                    throw Error.storageLocationCreate(nil)
                 }
                 if !exists {
                     do {
                         try fm.createDirectory(at: url, withIntermediateDirectories: true, attributes: nil)
                     } catch {
-                        throw Error.destinationDirectorySetupError(error as NSError)
+                        throw Error.storageLocationCreate(error as NSError)
                     }
                 }
             }

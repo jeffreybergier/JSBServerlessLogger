@@ -28,27 +28,37 @@
 import Foundation
 
 public protocol ServerlessLoggerErrorDelegate: class {
-    func error(_: Logger.Error, ocurredInLoggerWithConfiguration: ServerlessLoggerConfigurationProtocol)
+    func logger(with configuration: ServerlessLoggerConfigurationProtocol,
+                produced error: Logger.Error)
 }
 
 extension Logger {
     public enum Error: CustomNSError {
 
         // MARK: Errors
-        case destinationDirectorySetupError(NSError?)
-        case writeToInboxError(URL, Data)
-        case codableError(NSError)
+        case storageLocationCreate(NSError?)
+        case codable(NSError)
+        case addToInbox(URL, Data)
+        case moveToOutbox(NSError)
+        case moveToSent(NSError)
+        case moveToInbox(NSError)
 
         // MARK: Protocol Conformance
         public static let errorDomain: String = "JSBServerlessLoggerErrorDomain"
         public var errorCode: Int {
             switch self {
-            case .destinationDirectorySetupError:
+            case .storageLocationCreate:
                 return -1000
-            case .writeToInboxError:
+            case .codable:
                 return -1001
-            case .codableError:
+            case .addToInbox:
                 return -1002
+            case .moveToInbox:
+                return -1003
+            case .moveToOutbox:
+                return -1004
+            case .moveToSent:
+                return -1005
             }
         }
         

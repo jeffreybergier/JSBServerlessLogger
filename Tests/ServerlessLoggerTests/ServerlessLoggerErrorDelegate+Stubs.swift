@@ -30,8 +30,11 @@ import Foundation
 import ServerlessLogger
 
 class ErrorDelegateClosureStub: ServerlessLoggerErrorDelegate {
-    var errorConfiguration: ((Logger.Error, ServerlessLoggerConfigurationProtocol) -> Void)?
-    func error(_ error: Logger.Error, ocurredInLoggerWithConfiguration configuration: ServerlessLoggerConfigurationProtocol) {
-        self.errorConfiguration!(error, configuration)
+    var error: ((Logger.Error, ServerlessLoggerConfigurationProtocol) -> Void)?
+
+    func logger(with configuration: ServerlessLoggerConfigurationProtocol,
+                produced error: Logger.Error)
+    {
+        self.error!(error, configuration)
     }
 }
