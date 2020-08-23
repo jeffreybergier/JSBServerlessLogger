@@ -49,6 +49,7 @@ extension Logger {
         private let monitor: Monitor
         
         // MARK: INIT
+        /// Use if you prefer untyped errors. Use `new()` if you prefer typed errors
         public init(configuration: ServerlessLoggerConfigurationProtocol) throws {
             self.configuration = configuration
             self.monitor = Monitor(configuration: configuration)
@@ -56,6 +57,18 @@ extension Logger {
             self.outputLevel = configuration.logLevel
             try self.createDirectoryStructureIfNeeded()
             NSFileCoordinator.addFilePresenter(self.monitor)
+        }
+
+        /// Use if you prefer typed errors. Use `init()` if you prefer untyped errors
+        open class func new(configuration: ServerlessLoggerConfigurationProtocol)
+                            -> Result<Destination<T>, Logger.Error>
+        {
+            do {
+                let dest = try Destination<T>(configuration: configuration)
+                return .success(dest)
+            } catch {
+                return .failure(error as! Logger.Error)
+            }
         }
         
         // MARK: Protocol Requirements

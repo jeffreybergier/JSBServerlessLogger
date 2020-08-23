@@ -37,6 +37,7 @@ open class Logger: XCGLogger {
     public let configuration: ServerlessLoggerConfigurationProtocol
     
     // MARK: INIT
+    /// Use if you prefer untyped errors. Use `new()` if you prefer typed errors
     public init(configuration: ServerlessLoggerConfigurationProtocol,
                 includeDefaultXCGDestinations: Bool = true,
                 includeDefaultJSBDestinations: Bool = true) throws
@@ -46,6 +47,21 @@ open class Logger: XCGLogger {
                    includeDefaultDestinations: includeDefaultXCGDestinations)
         guard includeDefaultJSBDestinations else { return }
         try self.add(destination: Destination<Event>(configuration: configuration))
+    }
+
+    /// Use if you prefer typed errors. Use `init()` if you prefer untyped errors
+    open class func new(configuration: ServerlessLoggerConfigurationProtocol,
+                        includeDefaultXCGDestinations: Bool = true,
+                        includeDefaultJSBDestinations: Bool = true) -> Result<Logger, Logger.Error>
+    {
+        do {
+            let logger = try Logger(configuration: configuration,
+                                    includeDefaultXCGDestinations: includeDefaultXCGDestinations,
+                                    includeDefaultJSBDestinations: includeDefaultJSBDestinations)
+            return .success(logger)
+        } catch {
+            return .failure(error as! Logger.Error)
+        }
     }
     
     // MARK: Custom

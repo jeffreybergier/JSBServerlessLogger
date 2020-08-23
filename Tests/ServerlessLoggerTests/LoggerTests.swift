@@ -33,7 +33,7 @@ class LoggerMock1Tests: ParentTest {
 
     let mock: MockProtocol.Type = Mock1.self
 
-    lazy var log = try! Logger(configuration: self.mock.configuration)
+    lazy var log = try! Logger.new(configuration: self.mock.configuration).get()
 
     func test_logError() {
         let wait1 = XCTestExpectation()
@@ -76,7 +76,7 @@ class LoggerMock2Tests: ParentTest {
 
     let mock: MockProtocol.Type = Mock2.self
 
-    lazy var log = try! Logger(configuration: self.mock.configuration)
+    lazy var log = try! Logger.new(configuration: self.mock.configuration).get()
 
     func test_logDebug() {
         let wait1 = XCTestExpectation()

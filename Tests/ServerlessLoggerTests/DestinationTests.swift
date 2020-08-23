@@ -33,7 +33,7 @@ class DestinationTests: ParentTest {
 
     let mock: MockProtocol.Type = Mock1.self
 
-    lazy var dest = try! Logger.Destination<Event>(configuration: self.mock.configuration)
+    lazy var dest = try! Logger.Destination<Event>.new(configuration: self.mock.configuration).get()
 
     override func setUpWithError() throws {
         try super.setUpWithError()
