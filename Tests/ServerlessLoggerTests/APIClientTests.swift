@@ -37,12 +37,6 @@ class APIClientMock1Tests: ParentTest {
                                        clientDelegate: nil,
                                        sessionDelegate: self.sessionDelegate)
 
-    override func setUpWithError() throws {
-        try super.setUpWithError()
-        ServerlessLogger.FileManager.default = self.fm
-        ServerlessLogger.URLSession.testReplacement = self.session
-    }
-
     func test_send_secure() {
         self.fm.contentsAtPath = { _ in self.mock.onDisk.first!.1 }
         let wait1 = XCTestExpectation()
@@ -71,12 +65,6 @@ class APIClientMock2Tests: ParentTest {
     lazy var client = Logger.APIClient(configuration: self.mock.configuration,
                                        clientDelegate: nil,
                                        sessionDelegate: self.sessionDelegate)
-
-    override func setUpWithError() throws {
-        try super.setUpWithError()
-        ServerlessLogger.FileManager.default = self.fm
-        ServerlessLogger.URLSession.testReplacement = self.session
-    }
 
     func test_send_insecure() {
         self.fm.contentsAtPath = { _ in self.mock.onDisk.first!.data }

@@ -35,12 +35,6 @@ class DestinationTests: ParentTest {
 
     lazy var dest = try! Logger.Destination<Event>.new(configuration: self.mock.configuration).get()
 
-    override func setUpWithError() throws {
-        try super.setUpWithError()
-        ServerlessLogger.FileManager.default = self.fm
-        ServerlessLogger.NSFileCoordinator.testReplacement = self.coor
-    }
-
     func test_logic_isEnabledFor() {
         let wait1 = XCTestExpectation()
         wait1.expectedFulfillmentCount = 3

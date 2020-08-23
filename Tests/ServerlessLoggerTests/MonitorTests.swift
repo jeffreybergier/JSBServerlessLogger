@@ -38,8 +38,7 @@ class MonitorTests: ParentTest {
 
     override func setUpWithError() throws {
         try super.setUpWithError()
-        ServerlessLogger.FileManager.default = self.fm
-        ServerlessLogger.NSFileCoordinator.testReplacement = self.coor
+        // configure the monitor's API stub
         self.monitor.apiClient = self.api
     }
 
