@@ -58,9 +58,7 @@ import Foundation
 
 internal enum FileManager {
     internal static var `default`: FileManagerProtocol! = {
-        #if DEBUG
         guard !IS_TESTING else { return nil }
-        #endif
         return Foundation.FileManager.default
     }()
 }

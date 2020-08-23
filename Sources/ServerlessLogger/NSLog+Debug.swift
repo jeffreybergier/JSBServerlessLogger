@@ -27,11 +27,13 @@
 
 import Foundation
 
-#if DEBUG
 internal let IS_TESTING: Bool = {
+    #if DEBUG
     return NSClassFromString("XCTestCase") != nil
+    #else
+    return false
+    #endif
 }()
-#endif
 
 internal func NSDebugLog(_ input: @autoclosure () -> String) {
     #if DEBUG
