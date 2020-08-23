@@ -36,16 +36,15 @@ class DestinationTests: ParentTest {
     lazy var dest = try! Logger.Destination<Event>.new(configuration: self.mock.configuration).get()
 
     func test_logic_isEnabledFor() {
-        let wait1 = XCTestExpectation()
-        wait1.expectedFulfillmentCount = 3
+        let wait1 = self.newWait(count: 3)
         self.fm.fileExistsAtPathIsDirectory = { path, isDirectory in
-            wait1.fulfill()
+            wait1(nil)
             isDirectory!.pointee = true
             return true
         }
-        let wait2 = XCTestExpectation()
+        let wait2 = self.newWait()
         type(of: self.coor!).addFilePresenter = { _ in
-            wait2.fulfill()
+            wait2(nil)
         }
         XCTAssertFalse(self.dest.isEnabledFor(level: .verbose))
         XCTAssertFalse(self.dest.isEnabledFor(level: .debug))
@@ -57,136 +56,128 @@ class DestinationTests: ParentTest {
         XCTAssertTrue(self.dest.isEnabledFor(level: .alert))
         XCTAssertTrue(self.dest.isEnabledFor(level: .emergency))
         XCTAssertTrue(self.dest.isEnabledFor(level: .none))
-        self.wait(for: [wait1, wait2], timeout: 0.0)
+        self.waitInstant()
     }
 
     func test_logic_init_directoriesExist() {
-        let wait1 = XCTestExpectation()
-        wait1.expectedFulfillmentCount = 3
+        let wait1 = self.newWait(count: 3)
         self.fm.fileExistsAtPathIsDirectory = { path, isDirectory in
-            wait1.fulfill()
+            wait1(nil)
             isDirectory!.pointee = true
             return true
         }
-        let wait2 = XCTestExpectation()
+        let wait2 = self.newWait()
         type(of: self.coor!).addFilePresenter = { _ in
-            wait2.fulfill()
+            wait2(nil)
         }
         self.fm.createDirectoryAtURLWithIntermediateDirectoriesAttributes = { _, _, _ in
             XCTFail()
         }
         _ = self.dest
-        self.wait(for: [wait1, wait2], timeout: 0.0)
+        self.waitInstant()
     }
 
     func test_logic_init_directoriesDontExist() {
-        let wait1 = XCTestExpectation()
-        wait1.expectedFulfillmentCount = 3
+        let wait1 = self.newWait(count: 3)
         self.fm.fileExistsAtPathIsDirectory = { path, isDirectory in
-            wait1.fulfill()
+            wait1(nil)
             return false
         }
-        let wait2 = XCTestExpectation()
-        wait2.expectedFulfillmentCount = 3
+        let wait2 = self.newWait(count: 3)
         var wait2Count = 0
         self.fm.createDirectoryAtURLWithIntermediateDirectoriesAttributes = { url, _, _ in
-            switch wait2Count {
-            case 0:
-                XCTAssertEqual(url, self.mock.configuration.storageLocation.inboxURL)
-            case 1:
-                XCTAssertEqual(url, self.mock.configuration.storageLocation.outboxURL)
-            case 2:
-                XCTAssertEqual(url, self.mock.configuration.storageLocation.sentURL)
-            default:
-                XCTFail()
+            wait2 {
+                switch wait2Count {
+                case 0:
+                    XCTAssertEqual(url, self.mock.configuration.storageLocation.inboxURL)
+                case 1:
+                    XCTAssertEqual(url, self.mock.configuration.storageLocation.outboxURL)
+                case 2:
+                    XCTAssertEqual(url, self.mock.configuration.storageLocation.sentURL)
+                default:
+                    XCTFail()
+                }
+                wait2Count += 1
             }
-            wait2Count += 1
-            wait2.fulfill()
         }
-        let wait3 = XCTestExpectation(description: "Verify this object is added as a File Presenter")
+        let wait3 = self.newWait()
         type(of: self.coor).addFilePresenter = { input in
-            wait3.fulfill()
-            XCTAssertTrue(input.isKind(of: Logger.Monitor.self))
+            wait3 {
+                XCTAssertTrue(input.isKind(of: Logger.Monitor.self))
+            }
         }
         _ = self.dest
-        self.wait(for: [wait1, wait2, wait3], timeout: 0.0)
+        self.waitInstant()
     }
 
     func test_logic_init_error() {
-        let wait1 = XCTestExpectation(description: "fileExistsAtPathIsDirectory")
-        wait1.expectedFulfillmentCount = 1
+        let wait = self.newWait()
         self.fm.fileExistsAtPathIsDirectory = { path, isDirectory in
-            wait1.fulfill()
+            wait(nil)
             isDirectory!.pointee = false
             return true
         }
         self.fm.createDirectoryAtURLWithIntermediateDirectoriesAttributes = { _, _, _ in
             XCTFail()
         }
-        let wait2 = XCTestExpectation(description: "Logger.Destination")
-        do {
-            _ = try Logger.Destination<Event>(configuration: self.mock.configuration)
-            XCTFail()
-        } catch {
-            wait2.fulfill()
-            XCTAssertTrue((error as! Logger.Error).isKind(of: .storageLocationCreate(nil)))
-        }
-        self.wait(for: [wait1, wait2], timeout: 0.1)
+        let result = Logger.Destination<Event>.new(configuration: self.mock.configuration)
+        XCTAssertTrue(result.error!.isKind(of: .storageLocationCreate(nil)))
+        self.waitInstant()
     }
 
     func test_appendToInbox_success() {
-        let wait1 = XCTestExpectation()
-        wait1.expectedFulfillmentCount = 3
+        let wait1 = self.newWait(count: 3)
         self.fm.fileExistsAtPathIsDirectory = { path, isDirectory in
-            wait1.fulfill()
+            wait1(nil)
             isDirectory!.pointee = true
             return true
         }
-        let wait2 = XCTestExpectation()
+        let wait2 = self.newWait()
         type(of: self.coor!).addFilePresenter = { _ in
-            wait2.fulfill()
+            wait2(nil)
         }
-        let wait3 = XCTestExpectation()
+        let wait3 = self.newWait()
         self.fm.createFileAtPathWithContentsAttributes = { path, data, _ in
-            wait3.fulfill()
-            let url = URL(string: path)!
-            XCTAssertEqual(url.deletingLastPathComponent().path, self.mock.configuration.storageLocation.inboxURL.path)
-            let event = try! JSONDecoder().decode(Event.self, from: data!)
-            XCTAssertEqual(event, self.mock.event)
+            wait3 {
+                let url = URL(string: path)!
+                XCTAssertEqual(url.deletingLastPathComponent().path, self.mock.configuration.storageLocation.inboxURL.path)
+                let event = try! JSONDecoder().decode(Event.self, from: data!)
+                XCTAssertEqual(event, self.mock.event)
+            }
             return true
         }
         self.dest.appendToInbox(self.mock.event)
-        self.wait(for: [wait1, wait2, wait3], timeout: 0.0)
+        self.waitInstant()
     }
 
     func test_appendToInbox_error() {
-        let wait1 = XCTestExpectation()
-        wait1.expectedFulfillmentCount = 3
+        let wait1 = self.newWait(count: 3)
         self.fm.fileExistsAtPathIsDirectory = { path, isDirectory in
-            wait1.fulfill()
+            wait1(nil)
             isDirectory!.pointee = true
             return true
         }
-        let wait2 = XCTestExpectation()
+        let wait2 = self.newWait()
         type(of: self.coor!).addFilePresenter = { _ in
-            wait2.fulfill()
+            wait2(nil)
         }
-        let wait3 = XCTestExpectation()
+        let wait3 = self.newWait()
         self.fm.createFileAtPathWithContentsAttributes = { _, _, _ in
-            wait3.fulfill()
+            wait3(nil)
             return false
         }
-        let wait4 = XCTestExpectation()
+        let wait4 = self.newWait()
         self.errorDelegate.error = { error, _ in
-            wait4.fulfill()
-            if case .addToInbox(let url, _) = error {
-                XCTAssertEqual(url.deletingLastPathComponent(), self.mock.configuration.storageLocation.inboxURL)
-            } else {
-                XCTFail("Wrong Error: \(error)")
+            wait4 {
+                if case .addToInbox(let url, _) = error {
+                    XCTAssertEqual(url.deletingLastPathComponent(), self.mock.configuration.storageLocation.inboxURL)
+                } else {
+                    XCTFail("Wrong Error: \(error)")
+                }
             }
         }
         self.dest.appendToInbox(self.mock.event)
-        self.wait(for: [wait1, wait2, wait3], timeout: 0.0)
+        self.waitInstant()
     }
     
 }

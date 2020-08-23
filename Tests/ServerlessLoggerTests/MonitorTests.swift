@@ -48,44 +48,41 @@ class MonitorTests: ParentTest {
     }
 
     func test_logic_presentedItemDidChange_success() {
-        let wait1 = XCTestExpectation(description: "contentsOfDirectoryAtURLIncludingPropertiesForKeysOptions")
+        let wait1 = self.newWait()
         self.fm.contentsOfDirectoryAtURLIncludingPropertiesForKeysOptions = { url, _, _ in
-            DispatchQueue.main.async { wait1.fulfill() }
+            wait1(nil)
             return self.mock.onDisk.map { $0.url }
         }
-        let wait2 = XCTestExpectation(description: "moveItemAtURLtoURL")
+        let wait2 = self.newWait()
         self.fm.moveItemAtURLtoURL = { from, to in
-            DispatchQueue.main.async {
-                wait2.fulfill()
+            wait2 {
                 XCTAssertEqual(self.mock.onDisk.first!.url, from)
                 XCTAssertEqual(from.lastPathComponent, to.lastPathComponent)
                 XCTAssertEqual(to.deletingLastPathComponent(), self.mock.configuration.storageLocation.outboxURL)
                 XCTAssertEqual(from.deletingLastPathComponent(), self.mock.configuration.storageLocation.inboxURL)
             }
         }
-        let wait3 = XCTestExpectation(description: "sendPayload")
+        let wait3 = self.newWait()
         self.api.sendPayload = { to in
-            DispatchQueue.main.async {
-                wait3.fulfill()
+            wait3 {
                 let from = self.mock.onDisk.first!.url
                 XCTAssertEqual(from.lastPathComponent, to.lastPathComponent)
                 XCTAssertEqual(to.deletingLastPathComponent(), self.mock.configuration.storageLocation.outboxURL)
             }
         }
-        let wait4 = XCTestExpectation(description: "coordinateMovingFromURLToURLByAccessor")
+        let wait4 = self.newWait()
         self.coor.coordinateMovingFromURLToURLByAccessor = { from, to, accessor in
-            wait4.fulfill()
+            wait4(nil)
             try accessor(from, to)
         }
         self.monitor.presentedItemDidChange()
-        self.wait(for: [wait1, wait2, wait3, wait4], timeout: 0.1)
+        self.waitShort()
     }
 
     func test_logic_didSend_success() {
-        let wait1 = XCTestExpectation(description: "moveItemAtURLtoURL")
+        let wait1 = self.newWait()
         self.fm.moveItemAtURLtoURL = { from, to in
-            DispatchQueue.main.async {
-                wait1.fulfill()
+            wait1 {
                 // check that the file names match
                 XCTAssertEqual(self.mock.onDisk.first!.url.lastPathComponent, from.lastPathComponent)
                 XCTAssertEqual(from.lastPathComponent, to.lastPathComponent)
@@ -95,22 +92,21 @@ class MonitorTests: ParentTest {
                 XCTAssertEqual(to.deletingLastPathComponent(), self.mock.configuration.storageLocation.sentURL)
             }
         }
-        let wait2 = XCTestExpectation(description: "coordinateMovingFromURLToURLByAccessor")
+        let wait2 = self.newWait()
         self.coor.coordinateMovingFromURLToURLByAccessor = { from, to, accessor in
-            wait2.fulfill()
+            wait2(nil)
             try accessor(from, to)
         }
         let payload = self.mock.configuration.storageLocation.outboxURL
                           .appendingPathComponent(self.mock.onDisk.first!.url.lastPathComponent)
         self.monitor.didSend(payload: payload)
-        self.wait(for: [wait1, wait2], timeout: 0.1)
+        self.waitShort()
     }
 
     func test_logic_didFailToSend_success() {
-        let wait1 = XCTestExpectation(description: "moveItemAtURLtoURL")
+        let wait1 = self.newWait()
         self.fm.moveItemAtURLtoURL = { from, to in
-            DispatchQueue.main.async {
-                wait1.fulfill()
+            wait1 {
                 // check that the file names match
                 XCTAssertEqual(self.mock.onDisk.first!.url.lastPathComponent, from.lastPathComponent)
                 XCTAssertEqual(from.lastPathComponent, to.lastPathComponent)
@@ -120,151 +116,141 @@ class MonitorTests: ParentTest {
                 XCTAssertEqual(to.deletingLastPathComponent(), self.mock.configuration.storageLocation.inboxURL)
             }
         }
-        let wait2 = XCTestExpectation(description: "coordinateMovingFromURLToURLByAccessor")
+        let wait2 = self.newWait()
         self.coor.coordinateMovingFromURLToURLByAccessor = { from, to, accessor in
-            wait2.fulfill()
+            wait2(nil)
             try accessor(from, to)
         }
         let payload = self.mock.configuration.storageLocation.outboxURL
                           .appendingPathComponent(self.mock.onDisk.first!.url.lastPathComponent)
         self.monitor.didFailToSend(payload: payload)
-        self.wait(for: [wait1, wait2], timeout: 0.1)
+        self.waitShort()
     }
 
     func test_logic_presentedItemDidChange_failure() {
-        let wait1 = XCTestExpectation(description: "contentsOfDirectoryAtURLIncludingPropertiesForKeysOptions")
+        let wait1 = self.newWait()
         self.fm.contentsOfDirectoryAtURLIncludingPropertiesForKeysOptions = { url, _, _ in
-            DispatchQueue.main.async { wait1.fulfill() }
+            wait1(nil)
             return self.mock.onDisk.map { $0.url }
         }
-        let wait2 = XCTestExpectation(description: "moveItemAtURLtoURL")
+        let wait2 = self.newWait()
         self.fm.moveItemAtURLtoURL = { from, to in
-            DispatchQueue.main.async { wait2.fulfill() }
+            wait2(nil)
             throw NSError(domain: "TestDomain", code: -4444, userInfo: nil)
         }
-        let wait3 = XCTestExpectation(description: "coordinateMovingFromURLToURLByAccessor")
+        let wait3 = self.newWait()
         self.coor.coordinateMovingFromURLToURLByAccessor = { from, to, accessor in
-            DispatchQueue.main.async { wait3.fulfill() }
+            wait3(nil)
             try accessor(from, to)
         }
-        let wait4 = XCTestExpectation(description: "errorDelegate")
+        let wait4 = self.newWait()
         self.errorDelegate.error = { error, config in
-            DispatchQueue.main.async {
-                wait4.fulfill()
+            wait4 {
                 XCTAssertTrue(error.isKind(of: .moveToOutbox(NSError())))
             }
         }
         self.monitor.presentedItemDidChange()
-        self.wait(for: [wait1, wait2, wait3, wait4], timeout: 0.1)
+        self.waitShort()
     }
 
     func test_logic_didSend_failure() {
-        let wait1 = XCTestExpectation(description: "moveItemAtURLtoURL")
+        let wait1 = self.newWait()
         self.fm.moveItemAtURLtoURL = { from, to in
-            DispatchQueue.main.async { wait1.fulfill() }
+            wait1(nil)
             throw NSError(domain: "TestDomain", code: -4444, userInfo: nil)
         }
-        let wait2 = XCTestExpectation(description: "coordinateMovingFromURLToURLByAccessor")
+        let wait2 = self.newWait()
         self.coor.coordinateMovingFromURLToURLByAccessor = { from, to, accessor in
-            DispatchQueue.main.async { wait2.fulfill() }
+            wait2(nil)
             try accessor(from, to)
         }
-        let wait3 = XCTestExpectation(description: "errorDelegate")
+        let wait3 = self.newWait()
         self.errorDelegate.error = { error, config in
-            DispatchQueue.main.async {
-                wait3.fulfill()
+            wait3 {
                 XCTAssertTrue(error.isKind(of: .moveToSent(NSError())))
             }
         }
         let payload = self.mock.configuration.storageLocation.outboxURL
                           .appendingPathComponent(self.mock.onDisk.first!.url.lastPathComponent)
         self.monitor.didSend(payload: payload)
-        self.wait(for: [wait1, wait2, wait3], timeout: 0.1)
+        self.waitShort()
     }
 
     func test_logic_didFailToSend_failure() {
-        let wait1 = XCTestExpectation(description: "moveItemAtURLtoURL")
+        let wait1 = self.newWait()
         self.fm.moveItemAtURLtoURL = { from, to in
-            DispatchQueue.main.async { wait1.fulfill() }
+            wait1(nil)
             throw NSError(domain: "TestDomain", code: -4444, userInfo: nil)
         }
-        let wait2 = XCTestExpectation(description: "coordinateMovingFromURLToURLByAccessor")
+        let wait2 = self.newWait()
         self.coor.coordinateMovingFromURLToURLByAccessor = { from, to, accessor in
-            DispatchQueue.main.async { wait2.fulfill() }
+            wait2(nil)
             try accessor(from, to)
         }
-        let wait3 = XCTestExpectation(description: "errorDelegate")
+        let wait3 = self.newWait()
         self.errorDelegate.error = { error, config in
-            DispatchQueue.main.async {
-                wait3.fulfill()
+            wait3 {
                 XCTAssertTrue(error.isKind(of: .moveToInbox(NSError())))
             }
         }
         let payload = self.mock.configuration.storageLocation.outboxURL
                           .appendingPathComponent(self.mock.onDisk.first!.url.lastPathComponent)
         self.monitor.didFailToSend(payload: payload)
-        self.wait(for: [wait1, wait2, wait3], timeout: 0.1)
+        self.waitShort()
     }
 
     func test_outboxCleanup_success() {
-        let wait1 = XCTestExpectation()
+        let wait1 = self.newWait()
         self.fm.contentsOfDirectoryAtURLIncludingPropertiesForKeysOptions = { url, _, _ in
-            DispatchQueue.main.async {
-                wait1.fulfill()
+            wait1 {
                 XCTAssertEqual(url, self.mock.configuration.storageLocation.outboxURL)
             }
             return [self.mock.configuration.storageLocation.outboxURL.appendingPathComponent("This-Is-A-Test.file")]
         }
-        let wait2 = XCTestExpectation()
+        let wait2 = self.newWait()
         self.fm.moveItemAtURLtoURL = { from, to in
-            DispatchQueue.main.async {
-                wait2.fulfill()
+            wait2 {
                 XCTAssertEqual(from, self.mock.configuration.storageLocation.outboxURL.appendingPathComponent("This-Is-A-Test.file"))
                 XCTAssertEqual(to, self.mock.configuration.storageLocation.inboxURL.appendingPathComponent("This-Is-A-Test.file"))
             }
         }
-        let wait3 = XCTestExpectation()
+        let wait3 = self.newWait()
         self.coor.coordinateMovingFromURLToURLByAccessor = { from, to, accessor in
-            DispatchQueue.main.async {
-                wait3.fulfill()
+            wait3 {
                 XCTAssertEqual(from, self.mock.configuration.storageLocation.outboxURL.appendingPathComponent("This-Is-A-Test.file"))
                 XCTAssertEqual(to, self.mock.configuration.storageLocation.inboxURL.appendingPathComponent("This-Is-A-Test.file"))
             }
             try accessor(from, to)
         }
         self.monitor.performOutboxCleanup()
-        self.wait(for: [wait1, wait2, wait3], timeout: 0.1)
+        self.waitShort()
     }
 
     func test_outboxCleanup_failure() {
-        let wait1 = XCTestExpectation()
+        let wait1 = self.newWait()
         self.fm.contentsOfDirectoryAtURLIncludingPropertiesForKeysOptions = { url, _, _ in
-            DispatchQueue.main.async {
-                wait1.fulfill()
+            wait1 {
                 XCTAssertEqual(url, self.mock.configuration.storageLocation.outboxURL)
             }
             return [self.mock.configuration.storageLocation.outboxURL.appendingPathComponent("This-Is-A-Test.file")]
         }
-        let wait2 = XCTestExpectation()
+        let wait2 = self.newWait()
         self.fm.moveItemAtURLtoURL = { from, to in
-            DispatchQueue.main.async { wait2.fulfill() }
+            wait2(nil)
             throw NSError(domain: "", code: -4444, userInfo: nil)
         }
-        let wait3 = XCTestExpectation()
+        let wait3 = self.newWait()
         self.coor.coordinateMovingFromURLToURLByAccessor = { from, to, accessor in
-            DispatchQueue.main.async {
-                wait3.fulfill()
-            }
+            wait3(nil)
             try accessor(from, to)
         }
-        let wait4 = XCTestExpectation()
+        let wait4 = self.newWait()
         self.errorDelegate.error = { error, _ in
-            DispatchQueue.main.async {
-                wait4.fulfill()
+            wait4 {
                 XCTAssertTrue(error.isKind(of: .moveToInbox(NSError())))
             }
         }
         self.monitor.performOutboxCleanup()
-        self.wait(for: [wait1, wait2, wait3, wait4], timeout: 0.1)
+        self.waitShort()
     }
 }

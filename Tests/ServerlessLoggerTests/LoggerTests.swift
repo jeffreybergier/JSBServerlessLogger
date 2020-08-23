@@ -36,47 +36,48 @@ class LoggerMock1Tests: ParentTest {
     lazy var log = try! Logger.new(configuration: self.mock.configuration).get()
 
     func test_logError() {
-        let wait1 = XCTestExpectation()
+        let wait1 = self.newWait(count: 3)
         self.fm.fileExistsAtPathIsDirectory = { url, isDirectory in
-            wait1.fulfill()
+            wait1(nil)
             isDirectory!.pointee = true
             return true
         }
-        let wait2 = XCTestExpectation()
+        let wait2 = self.newWait()
         self.fm.createFileAtPathWithContentsAttributes = { path, data, _ in
-            wait2.fulfill()
-            let url = URL(string: path)!
-            XCTAssertEqual(url.deletingLastPathComponent().path, self.mock.configuration.storageLocation.inboxURL.path)
-            let event = try! JSONDecoder().decode(Event.self, from: data!)
-            XCTAssertEqual(event.errorDetails!.code, -4444)
-            XCTAssertEqual(event.errorDetails!.domain, "Test")
+            wait2 {
+                let url = URL(string: path)!
+                XCTAssertEqual(url.deletingLastPathComponent().path, self.mock.configuration.storageLocation.inboxURL.path)
+                let event = try! JSONDecoder().decode(Event.self, from: data!)
+                XCTAssertEqual(event.errorDetails!.code, -4444)
+                XCTAssertEqual(event.errorDetails!.domain, "Test")
+            }
             return true
         }
-        let wait3 = XCTestExpectation()
+        let wait3 = self.newWait()
         type(of: self.coor!).addFilePresenter = { _ in
-            wait3.fulfill()
+            wait3(nil)
         }
         self.log.error(NSError(domain: "Test", code: -4444, userInfo: nil))
-        self.wait(for: [wait1, wait2, wait3], timeout: 0.0)
+        self.waitInstant()
     }
 
     func test_logDebug() {
-        let wait1 = XCTestExpectation()
+        let wait1 = self.newWait(count: 3)
         self.fm.fileExistsAtPathIsDirectory = { url, isDirectory in
-            wait1.fulfill()
+            wait1(nil)
             isDirectory!.pointee = true
             return true
         }
         self.fm.createFileAtPathWithContentsAttributes = { path, data, _ in
-            XCTFail()
+            self.main { XCTFail() }
             return true
         }
-        let wait2 = XCTestExpectation()
+        let wait2 = self.newWait()
         type(of: self.coor!).addFilePresenter = { _ in
-            wait2.fulfill()
+            wait2(nil)
         }
         self.log.debug(NSError(domain: "Test", code: -4444, userInfo: nil))
-        self.wait(for: [wait1, wait2], timeout: 0.0)
+        self.waitInstant()
     }
 }
 
@@ -87,46 +88,47 @@ class LoggerMock2Tests: ParentTest {
     lazy var log = try! Logger.new(configuration: self.mock.configuration).get()
 
     func test_logDebug() {
-        let wait1 = XCTestExpectation()
+        let wait1 = self.newWait(count: 3)
         self.fm.fileExistsAtPathIsDirectory = { url, isDirectory in
-            wait1.fulfill()
+            wait1(nil)
             isDirectory!.pointee = true
             return true
         }
-        let wait2 = XCTestExpectation()
+        let wait2 = self.newWait()
         self.fm.createFileAtPathWithContentsAttributes = { path, data, _ in
-            wait2.fulfill()
-            let url = URL(string: path)!
-            XCTAssertEqual(url.deletingLastPathComponent().path, self.mock.configuration.storageLocation.inboxURL.path)
-            let event = try! JSONDecoder().decode(Event.self, from: data!)
-            XCTAssertEqual(event.errorDetails!.code, -4444)
-            XCTAssertEqual(event.errorDetails!.domain, "Test")
+            wait2 {
+                let url = URL(string: path)!
+                XCTAssertEqual(url.deletingLastPathComponent().path, self.mock.configuration.storageLocation.inboxURL.path)
+                let event = try! JSONDecoder().decode(Event.self, from: data!)
+                XCTAssertEqual(event.errorDetails!.code, -4444)
+                XCTAssertEqual(event.errorDetails!.domain, "Test")
+            }
             return true
         }
-        let wait3 = XCTestExpectation()
+        let wait3 = self.newWait()
         type(of: self.coor!).addFilePresenter = { _ in
-            wait3.fulfill()
+            wait3(nil)
         }
         self.log.debug(NSError(domain: "Test", code: -4444, userInfo: nil))
-        self.wait(for: [wait1, wait2, wait3], timeout: 0.0)
+        self.waitInstant()
     }
 
     func test_logVerbose() {
-        let wait1 = XCTestExpectation()
+        let wait1 = self.newWait(count: 3)
         self.fm.fileExistsAtPathIsDirectory = { url, isDirectory in
-            wait1.fulfill()
+            wait1(nil)
             isDirectory!.pointee = true
             return true
         }
         self.fm.createFileAtPathWithContentsAttributes = { path, data, _ in
-            XCTFail()
+            self.main { XCTFail() }
             return true
         }
-        let wait2 = XCTestExpectation()
+        let wait2 = self.newWait()
         type(of: self.coor!).addFilePresenter = { _ in
-            wait2.fulfill()
+            wait2(nil)
         }
         self.log.verbose(NSError(domain: "Test", code: -4444, userInfo: nil))
-        self.wait(for: [wait1, wait2], timeout: 0.0)
+        self.waitInstant()
     }
 }

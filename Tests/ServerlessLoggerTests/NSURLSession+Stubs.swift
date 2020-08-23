@@ -29,6 +29,8 @@ import XCTest
 import Foundation
 @testable import ServerlessLogger
 
+var FakeUploadTask: URLSessionUploadTask { URLSessionUploadTask() }
+
 class URLSessionStubParent: URLSessionProtocol {
 
     func uploadTask(with request: URLRequest, fromFile fileURL: URL) -> URLSessionUploadTask {

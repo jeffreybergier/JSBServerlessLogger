@@ -29,11 +29,9 @@ import CryptoKit
 import Foundation
 @testable import ServerlessLogger
 
-var FakeUploadTask: URLSessionUploadTask { URLSessionUploadTask() }
-
-typealias OnDisk = (url: URL, data: Data)
 
 protocol MockProtocol {
+    typealias OnDisk = (url: URL, data: Data)
     static var onDisk: [OnDisk] { get }
     static var remoteURL: URLComponents { get }
     static var symmetricKey: SymmetricKey { get }

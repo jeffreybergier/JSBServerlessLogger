@@ -39,22 +39,23 @@ class APIClientMock1Tests: ParentTest {
 
     func test_send_secure() {
         self.fm.contentsAtPath = { _ in self.mock.onDisk.first!.1 }
-        let wait1 = XCTestExpectation()
-        let wait2 = XCTestExpectation()
+        let wait1 = self.newWait()
         self.session.uploadTaskWithRequestFromFile = { request, onDiskURL in
-            wait1.fulfill()
-            XCTAssertEqual(request.url!.absoluteString,
-                           "https://www.this-is-a-test.com?mac=BAlnJZfKW/66t0kguloks5YuDMTRuy3nhUc26YdftBE%3D")
-            XCTAssertEqual(self.mock.onDisk.first!.url, onDiskURL)
+            wait1() {
+                XCTAssertEqual(request.url!.absoluteString,
+                               "https://www.this-is-a-test.com?mac=BAlnJZfKW/66t0kguloks5YuDMTRuy3nhUc26YdftBE%3D")
+                XCTAssertEqual(self.mock.onDisk.first!.url, onDiskURL)
+            }
             return FakeUploadTask
         }
+        let wait2 = self.newWait()
         self.session.resumeTask = { _ in
-            wait2.fulfill()
+            wait2(nil)
         }
         XCTAssertTrue(self.sessionDelegate.inFlight.isEmpty)
         self.client.send(payload: self.mock.onDisk.first!.url)
         XCTAssertEqual(self.sessionDelegate.inFlight.count, 1)
-        self.wait(for: [wait1, wait2], timeout: 0.0)
+        self.waitInstant()
     }
 }
 
@@ -68,22 +69,23 @@ class APIClientMock2Tests: ParentTest {
 
     func test_send_insecure() {
         self.fm.contentsAtPath = { _ in self.mock.onDisk.first!.data }
-        let wait1 = XCTestExpectation()
-        let wait2 = XCTestExpectation()
+        let wait1 = self.newWait()
         self.session.uploadTaskWithRequestFromFile = { request, onDiskURL in
-            wait1.fulfill()
-            XCTAssertEqual(request.url!.absoluteString,
-                           "https://www.this-is-a-test.com")
-            XCTAssertEqual(self.mock.onDisk.first!.url, onDiskURL)
+            wait1 {
+                XCTAssertEqual(request.url!.absoluteString,
+                               "https://www.this-is-a-test.com")
+                XCTAssertEqual(self.mock.onDisk.first!.url, onDiskURL)
+            }
             return FakeUploadTask
         }
+        let wait2 = self.newWait()
         self.session.resumeTask = { _ in
-            wait2.fulfill()
+            wait2(nil)
         }
         XCTAssertTrue(self.sessionDelegate.inFlight.isEmpty)
         self.client.send(payload: self.mock.onDisk.first!.url)
         XCTAssertEqual(self.sessionDelegate.inFlight.count, 1)
-        self.wait(for: [wait1, wait2], timeout: 0.0)
+        self.waitInstant()
     }
 }
 
@@ -117,19 +119,18 @@ class APIClientSessionDelegateTests: ParentTest {
         let remoteURL = self.mock.remoteURL.url!
         let onDiskURL = self.mock.onDisk.first!.url
         self.sessionDelegate.inFlight[remoteURL] = onDiskURL
-        let wait = XCTestExpectation()
+        let wait = self.newWait()
         self.clientDelegate.didSendPayload = { url in
-            XCTAssertEqual(url, onDiskURL)
-            wait.fulfill()
+            wait { XCTAssertEqual(url, onDiskURL) }
         }
         self.clientDelegate.didFailToSend = { _ in
-            XCTFail("Did not expect failure")
+            self.main { XCTFail("Did not expect failure") }
         }
         self.sessionDelegate.didCompleteTask(originalRequestURL: remoteURL,
                                              responseStatusCode: 200,
                                              error: nil)
         XCTAssertTrue(self.sessionDelegate.inFlight.isEmpty)
-        self.wait(for: [wait], timeout: 0.0)
+        self.waitInstant()
     }
 
     func test_didFail_error() {
@@ -137,24 +138,22 @@ class APIClientSessionDelegateTests: ParentTest {
         let onDiskURL = self.mock.onDisk.first!.url
         self.sessionDelegate.inFlight[remoteURL] = onDiskURL
         self.clientDelegate.didSendPayload = { _ in
-            XCTFail("Did not expect success")
+            self.main { XCTFail("Did not expect success") }
         }
-        let wait1 = XCTestExpectation()
+        let wait1 = self.newWait()
         self.clientDelegate.didFailToSend = { url in
-            XCTAssertEqual(url, onDiskURL)
-            wait1.fulfill()
+            wait1 { XCTAssertEqual(url, onDiskURL) }
         }
-        let wait2 = XCTestExpectation()
+        let wait2 = self.newWait()
         self.errorDelegate.error = { error, _ in
-            wait2.fulfill()
-            XCTAssertTrue(error.isKind(of: .network(nil)))
+            wait2 { XCTAssertTrue(error.isKind(of: .network(nil))) }
         }
         let error = NSError(domain: "", code: 0, userInfo: nil)
         self.sessionDelegate.didCompleteTask(originalRequestURL: remoteURL,
                                              responseStatusCode: 200,
                                              error: error)
         XCTAssertTrue(self.sessionDelegate.inFlight.isEmpty)
-        self.wait(for: [wait1, wait2], timeout: 0.0)
+        self.waitInstant()
     }
 
     func test_didFail_statusCode() {
@@ -162,22 +161,20 @@ class APIClientSessionDelegateTests: ParentTest {
         let onDiskURL = self.mock.onDisk.first!.url
         self.sessionDelegate.inFlight[remoteURL] = onDiskURL
         self.clientDelegate.didSendPayload = { _ in
-            XCTFail("Did not expect success")
+            self.main { XCTFail("Did not expect success") }
         }
-        let wait1 = XCTestExpectation()
+        let wait1 = self.newWait()
         self.clientDelegate.didFailToSend = { url in
-            XCTAssertEqual(url, onDiskURL)
-            wait1.fulfill()
+            wait1 { XCTAssertEqual(url, onDiskURL) }
         }
-        let wait2 = XCTestExpectation()
+        let wait2 = self.newWait()
         self.errorDelegate.error = { error, _ in
-            wait2.fulfill()
-            XCTAssertTrue(error.isKind(of: .network(nil)))
+            wait2 { XCTAssertTrue(error.isKind(of: .network(nil))) }
         }
         self.sessionDelegate.didCompleteTask(originalRequestURL: remoteURL,
                                              responseStatusCode: 201,
                                              error: nil)
         XCTAssertTrue(self.sessionDelegate.inFlight.isEmpty)
-        self.wait(for: [wait1, wait2], timeout: 0.0)
+        self.waitInstant()
     }
 }

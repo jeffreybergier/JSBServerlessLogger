@@ -28,7 +28,61 @@
 import XCTest
 @testable import ServerlessLogger
 
-class ParentTest: XCTestCase {
+class GenericTest: XCTestCase {
+
+    typealias FulfillClosure = (((() -> Void)?) -> Void)
+
+    /// Execute this closure to fulfill the `XCTestExpectation`
+    /// Also, pass in a new closure to execute validation tests before fulfilling
+    /// Also, this is all guaranteed to happen on the main thread as required by`XCTAssert`.
+    func newWait(description: String = "🤷‍♀️", count: Int = 1) -> FulfillClosure {
+        let wait = self.expectation(description: description)
+        wait.expectedFulfillmentCount = count
+        return { innerClosure in
+            let work = {
+                innerClosure?()
+                wait.fulfill()
+            }
+            guard !Thread.isMainThread else { work(); return; }
+            DispatchQueue.main.sync(execute: work)
+        }
+    }
+
+    /// Stupid helper to run the work on the main thread if needed
+    func main(_ work: (() -> Void)) {
+        if Thread.isMainThread {
+            work()
+        } else {
+            DispatchQueue.main.sync(execute: work)
+        }
+    }
+
+    func waitInstant() {
+        self.waitForExpectations(timeout: 0.0, handler: nil)
+    }
+
+    func waitShort() {
+        self.waitForExpectations(timeout: 0.1, handler: nil)
+    }
+
+    func waitMedium() {
+        self.waitForExpectations(timeout: 0.5, handler: nil)
+    }
+
+    func waitLong() {
+        self.waitForExpectations(timeout: 1.0, handler: nil)
+    }
+
+    @available(*, unavailable, message:"Use `waitShort()` or other variant in combination with `newWait()`")
+    override func wait(for: [XCTestExpectation], timeout: TimeInterval) { }
+
+    @available(*, unavailable, message:"Use `waitShort()` or other variant in combination with `newWait()`")
+    override func wait(for: [XCTestExpectation],
+                       timeout: TimeInterval,
+                       enforceOrder: Bool) { }
+}
+
+class ParentTest: GenericTest {
 
     var fm: FileManagerClosureStub!
     var coor: NSFileCoordinatorClosureStub!
