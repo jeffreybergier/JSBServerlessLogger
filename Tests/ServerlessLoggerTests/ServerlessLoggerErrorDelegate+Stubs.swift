@@ -62,6 +62,9 @@ extension Logger.Error {
         case .moveToInbox:
             if case .moveToInbox = rhs { return true }
             return false
+        case .network:
+            if case .network = rhs { return true }
+            return false
         }
     }
 }

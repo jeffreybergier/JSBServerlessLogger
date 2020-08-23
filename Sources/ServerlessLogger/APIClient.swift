@@ -69,7 +69,8 @@ extension Logger  {
             sessionConfiguration.isDiscretionary = true
             sessionConfiguration.shouldUseExtendedBackgroundIdleMode = true
             
-            let sessionDelegate = sessionDelegate ?? SessionDelegate(delegate: clientDelegate)
+            let sessionDelegate = sessionDelegate ?? SessionDelegate(configuration: configuration,
+                                                                     delegate: clientDelegate)
             self.session = URLSession.new(configuration: sessionConfiguration,
                                           delegate: sessionDelegate,
                                           delegateQueue: nil)
@@ -112,8 +113,12 @@ extension Logger.APIClient {
         /// Key: RemoteURL, Value: OnDiskURL
         public var inFlight = Dictionary<URL, URL>()
         public weak var delegate: ServerlessLoggerAPIClientDelegate?
+        public let configuration: ServerlessLoggerConfigurationProtocol
         
-        public init(delegate: ServerlessLoggerAPIClientDelegate?) {
+        public init(configuration: ServerlessLoggerConfigurationProtocol,
+                    delegate: ServerlessLoggerAPIClientDelegate?)
+        {
+            self.configuration = configuration
             self.delegate = delegate
             super.init()
         }
@@ -125,13 +130,16 @@ extension Logger.APIClient {
         public func didCompleteTask(originalRequestURL remoteURL: URL, responseStatusCode: Int, error: Error?) {
             guard let onDiskURL = self.inFlight.removeValue(forKey: remoteURL) else { return }
             if let error = error {
+                let error = error as NSError
                 NSDebugLog("JSBServerlessError: didFailToSend: \(onDiskURL), error: \(error)")
                 self.delegate?.didFailToSend(payload: onDiskURL)
+                self.configuration.errorDelegate?.logger(with: self.configuration, produced: .network(error))
                 return
             }
             guard responseStatusCode == 200 else {
                 NSDebugLog("JSBServerlessError: didFailToSend: \(onDiskURL), responseStatusCode: \(String(describing: responseStatusCode))")
                 self.delegate?.didFailToSend(payload: onDiskURL)
+                self.configuration.errorDelegate?.logger(with: self.configuration, produced: .network(nil))
                 return
             }
             self.delegate?.didSend(payload: onDiskURL)

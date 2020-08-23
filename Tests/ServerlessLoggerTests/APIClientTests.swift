@@ -121,7 +121,8 @@ fileprivate class ClientDelegateStub: ServerlessLoggerAPIClientDelegate {
 class APIClientSessionDelegateTests: ParentTest {
 
     let mock: MockProtocol.Type = Mock1.self
-    lazy var sessionDelegate = Logger.APIClient.SessionDelegate(delegate: self.clientDelegate)
+    lazy var sessionDelegate = Logger.APIClient.SessionDelegate(configuration: self.mock.configuration,
+                                                                delegate: self.clientDelegate)
     private let clientDelegate = ClientDelegateStub()
 
     func test_didSendSuccessfully() {
@@ -150,17 +151,22 @@ class APIClientSessionDelegateTests: ParentTest {
         self.clientDelegate.didSendPayload = { _ in
             XCTFail("Did not expect success")
         }
-        let wait = XCTestExpectation()
+        let wait1 = XCTestExpectation()
         self.clientDelegate.didFailToSend = { url in
             XCTAssertEqual(url, onDiskURL)
-            wait.fulfill()
+            wait1.fulfill()
+        }
+        let wait2 = XCTestExpectation()
+        self.errorDelegate.error = { error, _ in
+            wait2.fulfill()
+            XCTAssertTrue(error.isKind(of: .network(nil)))
         }
         let error = NSError(domain: "", code: 0, userInfo: nil)
         self.sessionDelegate.didCompleteTask(originalRequestURL: remoteURL,
                                              responseStatusCode: 200,
                                              error: error)
         XCTAssertTrue(self.sessionDelegate.inFlight.isEmpty)
-        self.wait(for: [wait], timeout: 0.0)
+        self.wait(for: [wait1, wait2], timeout: 0.0)
     }
 
     func test_didFail_statusCode() {
@@ -170,15 +176,20 @@ class APIClientSessionDelegateTests: ParentTest {
         self.clientDelegate.didSendPayload = { _ in
             XCTFail("Did not expect success")
         }
-        let wait = XCTestExpectation()
+        let wait1 = XCTestExpectation()
         self.clientDelegate.didFailToSend = { url in
             XCTAssertEqual(url, onDiskURL)
-            wait.fulfill()
+            wait1.fulfill()
+        }
+        let wait2 = XCTestExpectation()
+        self.errorDelegate.error = { error, _ in
+            wait2.fulfill()
+            XCTAssertTrue(error.isKind(of: .network(nil)))
         }
         self.sessionDelegate.didCompleteTask(originalRequestURL: remoteURL,
                                              responseStatusCode: 201,
                                              error: nil)
         XCTAssertTrue(self.sessionDelegate.inFlight.isEmpty)
-        self.wait(for: [wait], timeout: 0.0)
+        self.wait(for: [wait1, wait2], timeout: 0.0)
     }
 }
