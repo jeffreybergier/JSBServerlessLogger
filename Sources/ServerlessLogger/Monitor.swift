@@ -57,12 +57,39 @@ extension Logger {
         public init(configuration: ServerlessLoggerConfigurationProtocol) {
             self.configuration = configuration
             super.init()
+            self.performOutboxCleanup()
+            guard !IS_TESTING else { return }
             // only fire the timer during init if we are not testing
-            #if DEBUG
-            if !IS_TESTING { self.timer.fire() }
-            #else
             self.timer.fire()
-            #endif
+        }
+
+        /// Only run on Init
+        open func performOutboxCleanup() {
+            _presentedItemOperationQueue.async {
+                let fm = FileManager.default!
+                do {
+                    let outboxLogURLs = try fm.contentsOfDirectory(at: self.configuration.storageLocation.inboxURL,
+                                                                   includingPropertiesForKeys: nil,
+                                                                   options: [.skipsHiddenFiles,
+                                                                             .skipsPackageDescendants,
+                                                                             .skipsSubdirectoryDescendants])
+                    let c = NSFileCoordinator.new(filePresenter: self)
+                    for sourceURL in outboxLogURLs {
+                        let destURL = self.configuration.storageLocation.inboxURL
+                                          .appendingPathComponent(sourceURL.lastPathComponent)
+                        try c.coordinateMoving(from: sourceURL, to: destURL) {
+                            try fm.moveItem(at: $0, to: $1)
+                        }
+                        self.apiClient.send(payload: destURL)
+                    }
+                } catch {
+                    let error = error as NSError
+                    NSDebugLog("JSBServerlessLogger: Monitor.performOutboxCleanup: "
+                                + "Failed to move file: \(error)")
+                    self.configuration.errorDelegate?.logger(with: self.configuration,
+                                                             produced: .moveToInbox(error))
+                }
+            }
         }
     }
 }
@@ -77,11 +104,10 @@ extension Logger.Monitor: NSFilePresenter {
                                                               options: [.skipsHiddenFiles,
                                                                         .skipsPackageDescendants,
                                                                         .skipsSubdirectoryDescendants])
-                // TODO: Make network requests with URLs
                 let c = NSFileCoordinator.new(filePresenter: self)
                 for sourceURL in inboxLogURLs {
                     let destURL = self.configuration.storageLocation.outboxURL
-                        .appendingPathComponent(sourceURL.lastPathComponent)
+                                                    .appendingPathComponent(sourceURL.lastPathComponent)
                     try c.coordinateMoving(from: sourceURL, to: destURL) {
                         try fm.moveItem(at: $0, to: $1)
                     }
