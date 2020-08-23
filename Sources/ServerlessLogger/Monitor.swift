@@ -57,9 +57,9 @@ extension Logger {
         public init(configuration: ServerlessLoggerConfigurationProtocol) {
             self.configuration = configuration
             super.init()
-            self.performOutboxCleanup()
             guard !IS_TESTING else { return }
             // only fire the timer during init if we are not testing
+            self.performOutboxCleanup()
             self.timer.fire()
         }
 
@@ -68,7 +68,7 @@ extension Logger {
             _presentedItemOperationQueue.async {
                 let fm = FileManager.default!
                 do {
-                    let outboxLogURLs = try fm.contentsOfDirectory(at: self.configuration.storageLocation.inboxURL,
+                    let outboxLogURLs = try fm.contentsOfDirectory(at: self.configuration.storageLocation.outboxURL,
                                                                    includingPropertiesForKeys: nil,
                                                                    options: [.skipsHiddenFiles,
                                                                              .skipsPackageDescendants,

@@ -205,4 +205,66 @@ class MonitorTests: ParentTest {
         self.monitor.didFailToSend(payload: payload)
         self.wait(for: [wait1, wait2, wait3], timeout: 0.1)
     }
+
+    func test_outboxCleanup_success() {
+        let wait1 = XCTestExpectation()
+        self.fm.contentsOfDirectoryAtURLIncludingPropertiesForKeysOptions = { url, _, _ in
+            DispatchQueue.main.async {
+                wait1.fulfill()
+                XCTAssertEqual(url, self.mock.configuration.storageLocation.outboxURL)
+            }
+            return [self.mock.configuration.storageLocation.outboxURL.appendingPathComponent("This-Is-A-Test.file")]
+        }
+        let wait2 = XCTestExpectation()
+        self.fm.moveItemAtURLtoURL = { from, to in
+            DispatchQueue.main.async {
+                wait2.fulfill()
+                XCTAssertEqual(from, self.mock.configuration.storageLocation.outboxURL.appendingPathComponent("This-Is-A-Test.file"))
+                XCTAssertEqual(to, self.mock.configuration.storageLocation.inboxURL.appendingPathComponent("This-Is-A-Test.file"))
+            }
+        }
+        let wait3 = XCTestExpectation()
+        self.coor.coordinateMovingFromURLToURLByAccessor = { from, to, accessor in
+            DispatchQueue.main.async {
+                wait3.fulfill()
+                XCTAssertEqual(from, self.mock.configuration.storageLocation.outboxURL.appendingPathComponent("This-Is-A-Test.file"))
+                XCTAssertEqual(to, self.mock.configuration.storageLocation.inboxURL.appendingPathComponent("This-Is-A-Test.file"))
+            }
+            try accessor(from, to)
+        }
+        self.monitor.performOutboxCleanup()
+        self.wait(for: [wait1, wait2, wait3], timeout: 0.1)
+    }
+
+    func test_outboxCleanup_failure() {
+        let wait1 = XCTestExpectation()
+        self.fm.contentsOfDirectoryAtURLIncludingPropertiesForKeysOptions = { url, _, _ in
+            DispatchQueue.main.async {
+                wait1.fulfill()
+                XCTAssertEqual(url, self.mock.configuration.storageLocation.outboxURL)
+            }
+            return [self.mock.configuration.storageLocation.outboxURL.appendingPathComponent("This-Is-A-Test.file")]
+        }
+        let wait2 = XCTestExpectation()
+        self.fm.moveItemAtURLtoURL = { from, to in
+            DispatchQueue.main.async { wait2.fulfill() }
+            throw NSError(domain: "", code: -4444, userInfo: nil)
+        }
+        let wait3 = XCTestExpectation()
+        self.coor.coordinateMovingFromURLToURLByAccessor = { from, to, accessor in
+            DispatchQueue.main.async {
+                wait3.fulfill()
+            }
+            try accessor(from, to)
+        }
+        let wait4 = XCTestExpectation()
+        self.errorDelegate.error = { error, _ in
+            DispatchQueue.main.async {
+                wait4.fulfill()
+                XCTAssertTrue(error.isKind(of: .moveToInbox(NSError())))
+            }
+        }
+        self.monitor.performOutboxCleanup()
+        self.wait(for: [wait1, wait2, wait3, wait4], timeout: 0.1)
+    }
 }
