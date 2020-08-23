@@ -40,6 +40,13 @@ public protocol ServerlessLoggerConfigurationProtocol {
     var storageLocation: Logger.StorageLocation { get }
     /// URL that the API Client uses to send PUT request
     var endpointURL: URLComponents { get }
+    /// Error Delegate
+    /// Because JSBServerlessLogger operates without user interaction
+    /// there is no easy way to be notified when there are errors.
+    /// If you would like to know when network request or other errors occur,
+    /// set this delegate. Use a weak reference.
+    /// Use a weak reference in custom implementations to prevent memory leaks
+    var errorDelegate: ServerlessLoggerErrorDelegate? { get set }
 }
 
 @available(iOS 13.0, OSX 10.15, watchOS 6.0, tvOS 13.0, *)
@@ -70,6 +77,7 @@ extension Logger {
         public var identifier: String = "JSBServerlessLogger"
         public var logLevel: XCGLogger.Level = .error
         public var storageLocation = Logger.StorageLocation()
+        public weak var errorDelegate: ServerlessLoggerErrorDelegate?
     }
     
     @available(iOS 13.0, OSX 10.15, watchOS 6.0, tvOS 13.0, *)
@@ -81,5 +89,6 @@ extension Logger {
         public var identifier: String = "JSBServerlessLogger"
         public var logLevel: XCGLogger.Level = .error
         public var storageLocation = Logger.StorageLocation()
+        public weak var errorDelegate: ServerlessLoggerErrorDelegate?
     }
 }
