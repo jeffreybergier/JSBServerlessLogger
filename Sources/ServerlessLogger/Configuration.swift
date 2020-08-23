@@ -40,12 +40,20 @@ public protocol ServerlessLoggerConfigurationProtocol {
     var storageLocation: Logger.StorageLocation { get }
     /// URL that the API Client uses to send PUT request
     var endpointURL: URLComponents { get }
+    /// When an Event is added to the inbox because it was logged, there is no delay waiting for a timer.
+    /// However, when an Event fails to send, it is moved back to the Inbox. In this case, a timer is used to
+    /// prevent repeating network connections that always fail.
+    /// Default is 2 minutes.
+    var timerDelay: TimeInterval { get }
+    /// This feature is not currently supported
+    var supportsBackgroundNetworking: Bool { get }
     /// Error Delegate
     /// Because JSBServerlessLogger operates without user interaction
     /// there is no easy way to be notified when there are errors.
     /// If you would like to know when network request or other errors occur,
     /// set this delegate. Use a weak reference.
     /// Use a weak reference in custom implementations to prevent memory leaks
+    /// Note: DOES NOT execute on main thread
     var errorDelegate: ServerlessLoggerErrorDelegate? { get set }
 }
 
@@ -77,6 +85,8 @@ extension Logger {
         public var identifier: String = "JSBServerlessLogger"
         public var logLevel: XCGLogger.Level = .error
         public var storageLocation = Logger.StorageLocation()
+        public var timerDelay: TimeInterval = 2*60
+        public var supportsBackgroundNetworking: Bool = false
         public weak var errorDelegate: ServerlessLoggerErrorDelegate?
     }
     
@@ -89,6 +99,8 @@ extension Logger {
         public var identifier: String = "JSBServerlessLogger"
         public var logLevel: XCGLogger.Level = .error
         public var storageLocation = Logger.StorageLocation()
+        public var timerDelay: TimeInterval = 2*60
+        public var supportsBackgroundNetworking: Bool = false
         public weak var errorDelegate: ServerlessLoggerErrorDelegate?
     }
 }

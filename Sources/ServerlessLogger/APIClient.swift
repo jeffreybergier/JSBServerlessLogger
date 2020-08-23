@@ -56,14 +56,15 @@ extension Logger  {
              sessionDelegate: ServerlessLoggerAPISessionDelegate? = nil)
         {
             let sessionConfiguration: URLSessionConfiguration
-            if true { // TODO: replace with background allowed
-                sessionConfiguration = URLSessionConfiguration.default
-            } else {
+            if configuration.supportsBackgroundNetworking {
+                // TODO: Add background networking support
                 let sessionIdentifier = configuration.identifier  + "APIClient"
                 sessionConfiguration = URLSessionConfiguration.background(withIdentifier: sessionIdentifier)
                 #if !os(macOS)
                     sessionConfiguration.sessionSendsLaunchEvents = true
                 #endif
+            } else {
+                sessionConfiguration = URLSessionConfiguration.default
             }
             sessionConfiguration.allowsCellularAccess = true
             sessionConfiguration.isDiscretionary = true
