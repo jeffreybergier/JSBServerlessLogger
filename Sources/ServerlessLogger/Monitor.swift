@@ -74,7 +74,10 @@ extension Logger.Monitor: NSFilePresenter {
                 self.apiClient.send(payload: destURL)
             }
         } catch {
+            let error = error as NSError
             NSDebugLog("JSBServerlessLogger: Monitor.presentedItemDidChange: Failed to move file: \(error)")
+            self.configuration.errorDelegate?.logger(with: self.configuration,
+                                                     produced: .moveToOutbox(error))
         }
     }
 }
@@ -91,7 +94,10 @@ extension Logger.Monitor: ServerlessLoggerAPIClientDelegate {
                     try fm.moveItem(at: $0, to: $1)
                 }
             } catch {
+                let error = error as NSError
                 NSDebugLog("JSBServerlessLogger: Monitor.didSendURL: \(sourceURL): Failed to move item back to sentbox: \(error)")
+                self.configuration.errorDelegate?.logger(with: self.configuration,
+                                                         produced: .moveToSent(error))
             }
         }
     }
@@ -107,7 +113,10 @@ extension Logger.Monitor: ServerlessLoggerAPIClientDelegate {
                     try fm.moveItem(at: $0, to: $1)
                 }
             } catch {
+                let error = error as NSError
                 NSDebugLog("JSBServerlessLogger: Monitor.didFailToSendURL: \(sourceURL): Failed to move item back to inbox: \(error)")
+                self.configuration.errorDelegate?.logger(with: self.configuration,
+                                                         produced: .moveToInbox(error))
             }
         }
     }

@@ -64,7 +64,7 @@ class FileManagerClosureStub: FileManagerStubParent {
     
     var contentsAtPath: ((String) -> Data?)?
 
-    var moveItemAtURLtoURL: ((URL, URL) -> Void)?
+    var moveItemAtURLtoURL: ((URL, URL) throws -> Void)?
 
     var contentsOfDirectoryAtURLIncludingPropertiesForKeysOptions:
         ((URL, [URLResourceKey]?, Foundation.FileManager.DirectoryEnumerationOptions) -> [URL])?
@@ -80,7 +80,7 @@ class FileManagerClosureStub: FileManagerStubParent {
     }
 
     override func moveItem(at: URL, to: URL) throws {
-        self.moveItemAtURLtoURL!(at, to)
+        try self.moveItemAtURLtoURL!(at, to)
     }
 
     override func contentsOfDirectory(at url: URL, includingPropertiesForKeys keys: [URLResourceKey]?, options: Foundation.FileManager.DirectoryEnumerationOptions) throws -> [URL] {

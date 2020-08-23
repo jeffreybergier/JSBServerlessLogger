@@ -135,9 +135,7 @@ class DestinationTests: ParentTest {
             XCTFail()
         } catch {
             wait2.fulfill()
-            if case .storageLocationCreate = error as! Logger.Error
-            { return }
-            else { XCTFail(String(describing: error)) }
+            XCTAssertTrue((error as! Logger.Error).isKind(of: .storageLocationCreate(nil)))
         }
         self.wait(for: [wait1, wait2], timeout: 0.1)
     }

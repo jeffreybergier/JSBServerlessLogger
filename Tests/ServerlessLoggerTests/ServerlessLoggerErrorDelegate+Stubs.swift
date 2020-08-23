@@ -38,3 +38,30 @@ class ErrorDelegateClosureStub: ServerlessLoggerErrorDelegate {
         self.error!(error, configuration)
     }
 }
+
+extension Logger.Error {
+    func isKind(of error: Logger.Error) -> Bool {
+        let lhs = self
+        let rhs = error
+        switch lhs {
+        case .storageLocationCreate:
+            if case .storageLocationCreate = rhs { return true }
+            return false
+        case .codable:
+            if case .codable = rhs { return true }
+            return false
+        case .addToInbox:
+            if case .addToInbox = rhs { return true }
+            return false
+        case .moveToOutbox:
+            if case .moveToOutbox = rhs { return true }
+            return false
+        case .moveToSent:
+            if case .moveToSent = rhs { return true }
+            return false
+        case .moveToInbox:
+            if case .moveToInbox = rhs { return true }
+            return false
+        }
+    }
+}
