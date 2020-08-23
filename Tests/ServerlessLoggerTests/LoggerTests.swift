@@ -29,7 +29,7 @@ import XCTest
 import Foundation
 @testable import ServerlessLogger
 
-class LoggerTests: ParentTest {
+class LoggerMock1Tests: ParentTest {
 
     let mock: MockProtocol.Type = Mock1.self
 
@@ -70,5 +70,47 @@ class LoggerTests: ParentTest {
         self.log.debug(NSError(domain: "Test", code: -4444, userInfo: nil))
         self.wait(for: [wait1], timeout: 0.0)
     }
+}
 
+class LoggerMock2Tests: ParentTest {
+
+    let mock: MockProtocol.Type = Mock2.self
+
+    lazy var log = try! Logger(configuration: self.mock.configuration)
+
+    func test_logDebug() {
+        let wait1 = XCTestExpectation()
+        self.fm.fileExistsAtPathIsDirectory = { url, isDirectory in
+            wait1.fulfill()
+            isDirectory!.pointee = true
+            return true
+        }
+        let wait2 = XCTestExpectation()
+        self.fm.createFileAtPathWithContentsAttributes = { path, data, _ in
+            wait2.fulfill()
+            let url = URL(string: path)!
+            XCTAssertEqual(url.deletingLastPathComponent().path, self.mock.configuration.storageLocation.inboxURL.path)
+            let event = try! JSONDecoder().decode(Event.self, from: data!)
+            XCTAssertEqual(event.errorDetails!.code, -4444)
+            XCTAssertEqual(event.errorDetails!.domain, "Test")
+            return true
+        }
+        self.log.debug(NSError(domain: "Test", code: -4444, userInfo: nil))
+        self.wait(for: [wait1, wait2], timeout: 0.0)
+    }
+
+    func test_logVerbose() {
+        let wait1 = XCTestExpectation()
+        self.fm.fileExistsAtPathIsDirectory = { url, isDirectory in
+            wait1.fulfill()
+            isDirectory!.pointee = true
+            return true
+        }
+        self.fm.createFileAtPathWithContentsAttributes = { path, data, _ in
+            XCTFail()
+            return true
+        }
+        self.log.verbose(NSError(domain: "Test", code: -4444, userInfo: nil))
+        self.wait(for: [wait1], timeout: 0.0)
+    }
 }

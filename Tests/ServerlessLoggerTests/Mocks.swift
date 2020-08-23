@@ -50,9 +50,10 @@ enum Mock1: MockProtocol {
         let s = Logger.StorageLocation(baseDirectory: URL(string: "file:///baseDir")!,
                                        appName: "UnitTests",
                                        parentDirectory: "Mock1")
-        let c = Logger.DefaultSecureConfiguration(endpointURL: remoteURL,
+        var c = Logger.DefaultSecureConfiguration(endpointURL: remoteURL,
                                                   hmacKey: symmetricKey,
                                                   storageLocation: s)
+        c.logLevel = .error
         return c
     }()
 }
@@ -67,7 +68,8 @@ enum Mock2: MockProtocol {
         let s = Logger.StorageLocation(baseDirectory: URL(string: "file:///baseDir")!,
                                        appName: "UnitTests",
                                        parentDirectory: "Mock2")
-        let c = Logger.DefaultInsecureConfiguration(endpointURL: remoteURL, storageLocation: s)
+        var c = Logger.DefaultInsecureConfiguration(endpointURL: remoteURL, storageLocation: s)
+        c.logLevel = .debug
         return c
     }()
 }
