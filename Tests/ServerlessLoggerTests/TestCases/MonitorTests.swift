@@ -39,6 +39,7 @@ class MonitorTests: LoggerTestCase {
         try super.setUpWithError()
         // Make sure stub is ready for Monitor.performOutboxCleanup
         self.fm.contentsOfDirectoryAtURLIncludingPropertiesForKeysOptions = { _, _, _ in
+            self.fm.contentsOfDirectoryAtURLIncludingPropertiesForKeysOptions = nil
             return []
         }
         // configure the monitor's API stub
