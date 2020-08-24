@@ -28,56 +28,18 @@
 import XCTest
 @testable import ServerlessLogger
 
-class EndToEndTests: LoggerTestCase {
+class EndToEndTests: AsyncDeprecateTestCase {
 
     let mock: MockProtocol.Type = EndToEndMock1.self
 
-    lazy var dest = try! Logger.Destination<Event>(configuration: self.mock.configuration)
-    lazy var log = Logger(configuration: self.mock.configuration, destination: self.dest)
+    lazy var log = try! Logger(configuration: self.mock.configuration)
 
-    override func setUpWithError() throws {
-        try super.setUpWithError()
-        // Let regular session get created
-        self.session = nil
-        ServerlessLogger.URLSession.testReplacement = nil
-        // Allow for Monitor.performOutboxCleanup
-        self.fm.contentsOfDirectoryAtURLIncludingPropertiesForKeysOptions = { _, _, _ in
-            self.fm.contentsOfDirectoryAtURLIncludingPropertiesForKeysOptions = nil
-            return []
-        }
-        // Allow Destination to check if directory structure exists
-        var count = 0
-        self.fm.fileExistsAtPathIsDirectory = { _, isDirectory in
-            count += 1
-            if count == 3 { self.fm.fileExistsAtPathIsDirectory = nil }
-            isDirectory!.pointee = true
-            return true
-        }
-        // Allow Monitor to be added as file presenter
-        let coorType = type(of: self.coor!)
-        coorType.addFilePresenter = { _ in
-            coorType.addFilePresenter = nil
-        }
-    }
-
+    /*
     func test_withHMAC() {
-        var dataToSend: Data!
-        let wait1 = self.newWait()
-        self.fm.createFileAtPathWithContentsAttributes = { _, data, _ in
-            wait1 {
-                dataToSend = data
-            }
-            return data != nil ? true : false
-        }
-        self.log.error("")
-        XCTAssertNotNil(dataToSend)
-        let wait2 = self.newWait()
-        self.fm.contentsOfDirectoryAtURLIncludingPropertiesForKeysOptions = { _, _, _ in
-            wait2(nil)
-            return [URL(string: "file:///hereismyfile.file")!]
-        }
-        self.dest.monitor.presentedItemDidChange()
-        self.waitLong()
+        self.log.error(NSError(domain: "JSBServerlessLoggingErrorDomain", code: -4444, userInfo: nil))
+        _ =  self.newWait()
+        self.waitSuperLong()
     }
+ */
 
 }

@@ -46,7 +46,6 @@ internal enum URLSession {
                     delegateQueue queue: OperationQueue?) -> URLSessionProtocol
     {
         #if DEBUG
-        guard !IS_TESTING else { return self.testReplacement! }
         if let testReplacement = self.testReplacement { return testReplacement }
         #endif
         return Foundation.URLSession(configuration: configuration,

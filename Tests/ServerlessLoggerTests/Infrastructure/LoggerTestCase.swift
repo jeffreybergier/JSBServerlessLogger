@@ -57,7 +57,7 @@ class LoggerTestCase: AsyncDeprecateTestCase {
 
     override func tearDownWithError() throws {
         try super.tearDownWithError()
-        ServerlessLogger.FileManager.default = nil
+        ServerlessLogger.FileManager.default = FileManagerStubParent()
         ServerlessLogger.URLSession.testReplacement = nil
         ServerlessLogger.NSFileCoordinator.testReplacement = nil
         self.fm = nil

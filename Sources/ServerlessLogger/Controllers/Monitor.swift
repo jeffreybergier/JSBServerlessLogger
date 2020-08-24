@@ -65,7 +65,7 @@ extension Logger {
 
         /// Only run on Init
         open func performOutboxCleanup() {
-            let fm = FileManager.default!
+            let fm = FileManager.default
             do {
                 let outboxLogURLs = try fm.contentsOfDirectory(at: self.configuration.storageLocation.outboxURL,
                                                                includingPropertiesForKeys: nil,
@@ -95,7 +95,7 @@ extension Logger {
 extension Logger.Monitor: NSFilePresenter {
     open func presentedItemDidChange() {
         _presentedItemOperationQueue.async {
-            let fm = FileManager.default!
+            let fm = FileManager.default
             do {
                 let inboxLogURLs = try fm.contentsOfDirectory(at: self.configuration.storageLocation.inboxURL,
                                                               includingPropertiesForKeys: nil,
@@ -129,7 +129,7 @@ extension Logger.Monitor: ServerlessLoggerAPIClientDelegate {
                 let destURL = self.configuration.storageLocation.sentURL
                                   .appendingPathComponent(sourceURL.lastPathComponent)
                 let c = NSFileCoordinator.new(filePresenter: self)
-                let fm = FileManager.default!
+                let fm = FileManager.default
                 try c.coordinateMoving(from: sourceURL, to: destURL) {
                     try fm.moveItem(at: $0, to: $1)
                 }
@@ -149,7 +149,7 @@ extension Logger.Monitor: ServerlessLoggerAPIClientDelegate {
                 let destURL = self.configuration.storageLocation.inboxURL
                                   .appendingPathComponent(sourceURL.lastPathComponent)
                 let c = NSFileCoordinator.new(filePresenter: self)
-                let fm = FileManager.default!
+                let fm = FileManager.default
                 try c.coordinateMoving(from: sourceURL, to: destURL) {
                     try fm.moveItem(at: $0, to: $1)
                 }

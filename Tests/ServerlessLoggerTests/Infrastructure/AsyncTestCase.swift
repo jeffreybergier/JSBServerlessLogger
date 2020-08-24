@@ -71,6 +71,10 @@ class AsyncTestCase: XCTestCase {
     func waitLong() {
         self.waitForExpectations(timeout: 1.0, handler: nil)
     }
+
+    func waitSuperLong() {
+        self.waitForExpectations(timeout: 10.0, handler: nil)
+    }
 }
 
 class AsyncDeprecateTestCase: AsyncTestCase {

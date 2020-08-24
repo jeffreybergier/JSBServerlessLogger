@@ -38,10 +38,6 @@ internal protocol NSFileCoordinatorProtocol: class {
 internal enum NSFileCoordinator {
 
     static func addFilePresenter(_ filePresenter: NSFilePresenter) {
-        guard !IS_TESTING else {
-            type(of: self.testReplacement!).addFilePresenter(filePresenter)
-            return
-        }
         if let replacement = self.testReplacement {
             type(of: replacement).addFilePresenter(filePresenter)
         } else {
@@ -53,7 +49,6 @@ internal enum NSFileCoordinator {
 
     static func new(filePresenter: NSFilePresenter? = nil) -> NSFileCoordinatorProtocol
     {
-        guard !IS_TESTING else { return self.testReplacement! }
         if let testReplacement = self.testReplacement { return testReplacement }
         return Foundation.NSFileCoordinator(filePresenter: filePresenter)
     }
