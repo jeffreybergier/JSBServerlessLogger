@@ -31,19 +31,21 @@ public struct Event: Codable, Equatable {
     
     public static let kErrorKey = "JSBServerlessLoggerErrorKey"
     
-    public var incident: String
+    public var incident: String = String(UInt64.random(in: 10000000000000000000..<UInt64.max))
     public var logDetails: JSBLogDetails
     public var deviceDetails: DeviceDetails
     public var errorDetails: ErrorDetails?
     public var extraDetails: ExtraDetails?
 
-    public init(incident: String = String(UInt64.random(in: 10000000000000000000..<UInt64.max)),
+    public init(incident: String? = nil,
                 logDetails: JSBLogDetails,
                 deviceDetails: DeviceDetails = DeviceDetails(),
                 errorDetails: ErrorDetails? = nil,
                 extraDetails: ExtraDetails? = nil)
     {
-        self.incident = incident
+        if let incident = incident {
+            self.incident = incident
+        }
         self.logDetails = logDetails
         self.deviceDetails = deviceDetails
         self.errorDetails = errorDetails

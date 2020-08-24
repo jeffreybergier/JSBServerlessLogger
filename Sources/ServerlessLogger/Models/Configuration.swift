@@ -91,11 +91,11 @@ extension Logger {
         public var endpointURL: URLComponents
         public var extraDetails: Event.ExtraDetails?
 
-        public var identifier: String = "JSBServerlessLogger"
-        public var logLevel: XCGLogger.Level = .error
-        public var storageLocation = Logger.StorageLocation()
-        public var timerDelay: TimeInterval = 2*60
-        public var supportsBackgroundNetworking: Bool = false
+        public var identifier: String
+        public var logLevel: XCGLogger.Level
+        public var storageLocation: Logger.StorageLocation
+        public var timerDelay: TimeInterval
+        public var supportsBackgroundNetworking: Bool
         public weak var errorDelegate: ServerlessLoggerErrorDelegate?
 
         public init(identifier: String = "JSBServerlessLogger",

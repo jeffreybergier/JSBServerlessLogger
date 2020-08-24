@@ -25,8 +25,6 @@
 //
 //
 
-import XCTest
-import Foundation
 import ServerlessLogger
 
 class ErrorDelegateClosureStub: ServerlessLoggerErrorDelegate {

@@ -26,7 +26,6 @@
 //
 
 import XCTest
-@testable import ServerlessLogger
 
 class AsyncTestCase: XCTestCase {
 

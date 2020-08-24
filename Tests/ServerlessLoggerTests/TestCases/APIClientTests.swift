@@ -26,8 +26,7 @@
 //
 
 import XCTest
-import Foundation
-@testable import ServerlessLogger
+import ServerlessLogger
 
 class APIClientMock1Tests: LoggerTestCase {
 

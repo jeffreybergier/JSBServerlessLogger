@@ -27,7 +27,7 @@
 
 import CryptoKit
 import Foundation
-@testable import ServerlessLogger
+import ServerlessLogger
 
 
 protocol MockProtocol {
@@ -64,7 +64,6 @@ enum Mock1: MockProtocol {
                                                            lineNumber: 1000)
         let event = ServerlessLogger.Event(incident: "Mock1Incident",
                                            logDetails: details,
-                                           deviceDetails: .init(),
                                            errorDetails: nil,
                                            extraDetails: nil)
         return event

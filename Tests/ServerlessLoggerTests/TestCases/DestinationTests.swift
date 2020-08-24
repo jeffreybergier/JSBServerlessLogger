@@ -26,7 +26,6 @@
 //
 
 import XCTest
-import Foundation
 @testable import ServerlessLogger
 
 class DestinationTests: LoggerTestCase {

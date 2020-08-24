@@ -33,7 +33,6 @@ extension XCGLogger.Level: Codable { }
 extension Event: ServerlessLoggerEventProtocol {
     
     public init(configuration: ServerlessLoggerConfigurationProtocol, details: LogDetails) {
-        self.incident = String(UInt64.random(in: 10000000000000000000..<UInt64.max))
         self.deviceDetails = .init()
         self.logDetails = .init(details)
         self.errorDetails = (details.userInfo[Event.kErrorKey] as? NSError).map { .init($0) }

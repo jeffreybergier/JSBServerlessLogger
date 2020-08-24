@@ -25,9 +25,8 @@
 //
 //
 
-import XCTest
 import Foundation
-@testable import ServerlessLogger
+import ServerlessLogger
 
 class APIClientClosureStub: Logger.APIClient {
     var sendPayload: ((URL) -> Void)?

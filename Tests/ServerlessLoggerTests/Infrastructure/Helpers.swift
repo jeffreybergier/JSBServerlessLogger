@@ -25,8 +25,7 @@
 //
 //
 
-import XCTest
-@testable import ServerlessLogger
+import ServerlessLogger
 
 extension Logger.Error {
     func isKind(of error: Logger.Error) -> Bool {
