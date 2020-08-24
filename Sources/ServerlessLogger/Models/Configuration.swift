@@ -69,11 +69,20 @@ extension Logger {
     /// `{ baseDirectory }/{ appName }/{ parentDirectory }/Sent`
     public struct StorageLocation {
         /// Default is Application Support Directory
-        public var baseDirectory: URL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        public var baseDirectory: URL
         /// Default is Main Bundle Identifier
-        public var appName: String = Bundle.main.bundleIdentifier ?? "JSBServerlessLogger"
+        public var appName: String
         /// Default is `ServerlessLogger`
-        public var parentDirectory: String = "ServerlessLogger"
+        public var parentDirectory: String
+
+        public init(baseDirectory: URL? = nil,
+                    appName: String? = nil,
+                    parentDirectory: String? = nil)
+        {
+            self.baseDirectory = baseDirectory ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+            self.appName = appName ?? Bundle.main.bundleIdentifier ?? "JSBServerlessLogger"
+            self.parentDirectory = parentDirectory ?? "ServerlessLogger"
+        }
     }
 }
 
@@ -88,6 +97,25 @@ extension Logger {
         public var timerDelay: TimeInterval = 2*60
         public var supportsBackgroundNetworking: Bool = false
         public weak var errorDelegate: ServerlessLoggerErrorDelegate?
+
+        public init(identifier: String = "JSBServerlessLogger",
+                    endpointURL: URLComponents,
+                    storageLocation: Logger.StorageLocation = Logger.StorageLocation(),
+                    extraDetails: Event.ExtraDetails? = nil,
+                    logLevel: XCGLogger.Level = .error,
+                    timerDelay: TimeInterval = 2*60,
+                    supportsBackgroundNetworking: Bool = false,
+                    errorDelegate: ServerlessLoggerErrorDelegate? = nil)
+        {
+            self.endpointURL = endpointURL
+            self.extraDetails = extraDetails
+            self.identifier = identifier
+            self.logLevel = logLevel
+            self.storageLocation = storageLocation
+            self.timerDelay = timerDelay
+            self.supportsBackgroundNetworking = supportsBackgroundNetworking
+            self.errorDelegate = errorDelegate
+        }
     }
     
     @available(iOS 13.0, OSX 10.15, watchOS 6.0, tvOS 13.0, *)
@@ -95,12 +123,32 @@ extension Logger {
         public var endpointURL: URLComponents
         public var extraDetails: Event.ExtraDetails?
         public var hmacKey: SymmetricKey
-        
-        public var identifier: String = "JSBServerlessLogger"
-        public var logLevel: XCGLogger.Level = .error
-        public var storageLocation = Logger.StorageLocation()
-        public var timerDelay: TimeInterval = 2*60
-        public var supportsBackgroundNetworking: Bool = false
+        public var identifier: String
+        public var logLevel: XCGLogger.Level
+        public var storageLocation: Logger.StorageLocation
+        public var timerDelay: TimeInterval
+        public var supportsBackgroundNetworking: Bool
         public weak var errorDelegate: ServerlessLoggerErrorDelegate?
+
+        public init(identifier: String = "JSBServerlessLogger",
+                    endpointURL: URLComponents,
+                    hmacKey: SymmetricKey,
+                    storageLocation: Logger.StorageLocation = Logger.StorageLocation(),
+                    extraDetails: Event.ExtraDetails? = nil,
+                    logLevel: XCGLogger.Level = .error,
+                    timerDelay: TimeInterval = 2*60,
+                    supportsBackgroundNetworking: Bool = false,
+                    errorDelegate: ServerlessLoggerErrorDelegate? = nil)
+        {
+            self.endpointURL = endpointURL
+            self.extraDetails = extraDetails
+            self.hmacKey = hmacKey
+            self.identifier = identifier
+            self.logLevel = logLevel
+            self.storageLocation = storageLocation
+            self.timerDelay = timerDelay
+            self.supportsBackgroundNetworking = supportsBackgroundNetworking
+            self.errorDelegate = errorDelegate
+        }
     }
 }
