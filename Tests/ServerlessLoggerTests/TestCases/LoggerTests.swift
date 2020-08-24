@@ -29,7 +29,7 @@ import XCTest
 import Foundation
 @testable import ServerlessLogger
 
-class LoggerMock1Tests: ParentTest {
+class LoggerMock1Tests: LoggerTestCase {
 
     let mock: MockProtocol.Type = Mock1.self
 
@@ -89,7 +89,7 @@ class LoggerMock1Tests: ParentTest {
     }
 }
 
-class LoggerMock2Tests: ParentTest {
+class LoggerMock2Tests: LoggerTestCase {
 
     let mock: MockProtocol.Type = Mock2.self
 

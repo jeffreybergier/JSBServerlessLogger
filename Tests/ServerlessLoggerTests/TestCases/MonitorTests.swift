@@ -29,7 +29,7 @@ import XCTest
 import Foundation
 @testable import ServerlessLogger
 
-class MonitorTests: ParentTest {
+class MonitorTests: LoggerTestCase {
 
     private let mock = Mock1.self
 
