@@ -30,26 +30,26 @@ import Foundation
 
 extension XCGLogger.Level: Codable { }
 
+// swiftlint:disable operator_usage_whitespace
 extension Event: ServerlessLoggerEventProtocol {
     
     public init(configuration: ServerlessLoggerConfigurationProtocol, details: LogDetails) {
         self.deviceDetails = .init()
-        self.logDetails = .init(details)
-        self.errorDetails = (details.userInfo[Event.kErrorKey] as? NSError).map { .init($0) }
-        self.extraDetails = configuration.extraDetails
+        self.logDetails    = .init(details)
+        self.errorDetails  = (details.userInfo[Event.kErrorKey] as? NSError).map { .init($0) }
+        self.extraDetails  = configuration.extraDetails
     }
     
     public struct JSBLogDetails: Codable, Equatable {
         
-        public var level: XCGLogger.Level
-        public var date: Date
-        public var message: String
+        public var level:        XCGLogger.Level
+        public var date:         Date
+        public var message:      String
         public var functionName: String
-        public var fileName: String
-        public var lineNumber: Int
+        public var fileName:     String
+        public var lineNumber:   Int
         
         public init(_ input: LogDetails) {
-            // swiftlint:disable operator_usage_whitespace
             self.level        = input.level
             self.date         = input.date
             self.message      = input.message
@@ -58,12 +58,12 @@ extension Event: ServerlessLoggerEventProtocol {
             self.lineNumber   = input.lineNumber
         }
 
-        public init(level: XCGLogger.Level,
-                    date: Date,
-                    message: String,
+        public init(level:        XCGLogger.Level,
+                    date:         Date,
+                    message:      String,
                     functionName: String,
-                    fileName: String,
-                    lineNumber: Int)
+                    fileName:     String,
+                    lineNumber:   Int)
         {
             self.level        = level
             self.date         = date
@@ -71,7 +71,7 @@ extension Event: ServerlessLoggerEventProtocol {
             self.functionName = functionName
             self.fileName     = fileName
             self.lineNumber   = lineNumber
-            // swiftlint:enable operator_usage_whitespace
         }
     }
 }
+// swiftlint:enable operator_usage_whitespace

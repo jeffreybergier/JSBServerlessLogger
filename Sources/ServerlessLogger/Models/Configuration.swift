@@ -46,7 +46,7 @@ public protocol ServerlessLoggerConfigurationProtocol {
     /// Default is 2 minutes.
     var timerDelay: TimeInterval { get }
     /// This feature is not currently supported
-    var supportsBackgroundNetworking: Bool { get }
+    var backgroundSession: Bool { get }
     /// Error Delegate
     /// Because JSBServerlessLogger operates without user interaction
     /// there is no easy way to be notified when there are errors.
@@ -86,69 +86,70 @@ extension Logger {
     }
 }
 
+// swiftlint:disable operator_usage_whitespace
 extension Logger {
     public struct DefaultInsecureConfiguration: ServerlessLoggerConfigurationProtocol {
-        public var endpointURL: URLComponents
-        public var extraDetails: Event.ExtraDetails?
-
-        public var identifier: String
-        public var logLevel: XCGLogger.Level
-        public var storageLocation: Logger.StorageLocation
-        public var timerDelay: TimeInterval
-        public var supportsBackgroundNetworking: Bool
+        public var endpointURL:        URLComponents
+        public var extraDetails:       Event.ExtraDetails?
+        public var identifier:         String
+        public var logLevel:           XCGLogger.Level
+        public var storageLocation:    Logger.StorageLocation
+        public var timerDelay:         TimeInterval
+        public var backgroundSession:  Bool
         public weak var errorDelegate: ServerlessLoggerErrorDelegate?
 
-        public init(identifier: String = "JSBServerlessLogger",
-                    endpointURL: URLComponents,
-                    storageLocation: Logger.StorageLocation = Logger.StorageLocation(),
-                    extraDetails: Event.ExtraDetails? = nil,
-                    logLevel: XCGLogger.Level = .error,
-                    timerDelay: TimeInterval = 2*60,
-                    supportsBackgroundNetworking: Bool = false,
-                    errorDelegate: ServerlessLoggerErrorDelegate? = nil)
+        public init(identifier:        String                         = "JSBServerlessLogger",
+                    endpointURL:       URLComponents,
+                    storageLocation:   Logger.StorageLocation         = Logger.StorageLocation(),
+                    extraDetails:      Event.ExtraDetails?            = nil,
+                    logLevel:          XCGLogger.Level                = .error,
+                    timerDelay:        TimeInterval                   = 2*60,
+                    backgroundSession: Bool                           = false,
+                    errorDelegate:     ServerlessLoggerErrorDelegate? = nil)
         {
-            self.endpointURL = endpointURL
-            self.extraDetails = extraDetails
-            self.identifier = identifier
-            self.logLevel = logLevel
-            self.storageLocation = storageLocation
-            self.timerDelay = timerDelay
-            self.supportsBackgroundNetworking = supportsBackgroundNetworking
-            self.errorDelegate = errorDelegate
+            self.endpointURL       = endpointURL
+            self.extraDetails      = extraDetails
+            self.identifier        = identifier
+            self.logLevel          = logLevel
+            self.storageLocation   = storageLocation
+            self.timerDelay        = timerDelay
+            self.backgroundSession = backgroundSession
+            self.errorDelegate     = errorDelegate
         }
     }
     
     @available(iOS 13.0, OSX 10.15, watchOS 6.0, tvOS 13.0, *)
     public struct DefaultSecureConfiguration: ServerlessLoggerHMACConfigurationProtocol {
-        public var endpointURL: URLComponents
-        public var extraDetails: Event.ExtraDetails?
-        public var hmacKey: SymmetricKey
-        public var identifier: String
-        public var logLevel: XCGLogger.Level
-        public var storageLocation: Logger.StorageLocation
-        public var timerDelay: TimeInterval
-        public var supportsBackgroundNetworking: Bool
+        public var endpointURL:        URLComponents
+        public var extraDetails:       Event.ExtraDetails?
+        public var hmacKey:            SymmetricKey
+        public var identifier:         String
+        public var logLevel:           XCGLogger.Level
+        public var storageLocation:    Logger.StorageLocation
+        public var timerDelay:         TimeInterval
+        public var backgroundSession:  Bool
         public weak var errorDelegate: ServerlessLoggerErrorDelegate?
 
-        public init(identifier: String = "JSBServerlessLogger",
-                    endpointURL: URLComponents,
-                    hmacKey: SymmetricKey,
-                    storageLocation: Logger.StorageLocation = Logger.StorageLocation(),
-                    extraDetails: Event.ExtraDetails? = nil,
-                    logLevel: XCGLogger.Level = .error,
-                    timerDelay: TimeInterval = 2*60,
-                    supportsBackgroundNetworking: Bool = false,
-                    errorDelegate: ServerlessLoggerErrorDelegate? = nil)
+        public init(identifier:        String                         = "JSBServerlessLogger",
+                    endpointURL:       URLComponents,
+                    hmacKey:           SymmetricKey,
+                    storageLocation:   Logger.StorageLocation         = Logger.StorageLocation(),
+                    extraDetails:      Event.ExtraDetails?            = nil,
+                    logLevel:          XCGLogger.Level                = .error,
+                    timerDelay:        TimeInterval                   = 2*60,
+                    backgroundSession: Bool                           = false,
+                    errorDelegate:     ServerlessLoggerErrorDelegate? = nil)
         {
-            self.endpointURL = endpointURL
-            self.extraDetails = extraDetails
-            self.hmacKey = hmacKey
-            self.identifier = identifier
-            self.logLevel = logLevel
-            self.storageLocation = storageLocation
-            self.timerDelay = timerDelay
-            self.supportsBackgroundNetworking = supportsBackgroundNetworking
-            self.errorDelegate = errorDelegate
+            self.hmacKey           = hmacKey
+            self.endpointURL       = endpointURL
+            self.extraDetails      = extraDetails
+            self.identifier        = identifier
+            self.logLevel          = logLevel
+            self.storageLocation   = storageLocation
+            self.timerDelay        = timerDelay
+            self.backgroundSession = backgroundSession
+            self.errorDelegate     = errorDelegate
         }
     }
 }
+// swiftlint:enable operator_usage_whitespace

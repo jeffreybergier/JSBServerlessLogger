@@ -56,7 +56,7 @@ extension Logger  {
              sessionDelegate: ServerlessLoggerAPISessionDelegate? = nil)
         {
             let sessionConfiguration: URLSessionConfiguration
-            if configuration.supportsBackgroundNetworking {
+            if configuration.backgroundSession {
                 // TODO: Add background networking support
                 let sessionIdentifier = configuration.identifier  + "APIClient"
                 sessionConfiguration = URLSessionConfiguration.background(withIdentifier: sessionIdentifier)
