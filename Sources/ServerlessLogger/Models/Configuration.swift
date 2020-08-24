@@ -55,6 +55,9 @@ public protocol ServerlessLoggerConfigurationProtocol {
     /// Use a weak reference in custom implementations to prevent memory leaks
     /// Note: DOES NOT execute on main thread
     var errorDelegate: ServerlessLoggerErrorDelegate? { get set }
+    #if DEBUG
+    var successDelegate: ServerlessLoggerSuccessDelegate? { get set }
+    #endif
 }
 
 @available(iOS 13.0, OSX 10.15, watchOS 6.0, tvOS 13.0, *)
@@ -97,6 +100,9 @@ extension Logger {
         public var timerDelay:         TimeInterval
         public var backgroundSession:  Bool
         public weak var errorDelegate: ServerlessLoggerErrorDelegate?
+        #if DEBUG
+        public weak var successDelegate: ServerlessLoggerSuccessDelegate?
+        #endif
 
         public init(identifier:        String                         = "JSBServerlessLogger",
                     endpointURL:       URLComponents,
@@ -129,6 +135,9 @@ extension Logger {
         public var timerDelay:         TimeInterval
         public var backgroundSession:  Bool
         public weak var errorDelegate: ServerlessLoggerErrorDelegate?
+        #if DEBUG
+        public weak var successDelegate: ServerlessLoggerSuccessDelegate?
+        #endif
 
         public init(identifier:        String                         = "JSBServerlessLogger",
                     endpointURL:       URLComponents,

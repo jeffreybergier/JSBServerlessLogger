@@ -133,6 +133,10 @@ extension Logger.Monitor: ServerlessLoggerAPIClientDelegate {
                 try c.coordinateMoving(from: sourceURL, to: destURL) {
                     try fm.moveItem(at: $0, to: $1)
                 }
+                #if DEBUG
+                self.configuration.successDelegate?.logger(with: self.configuration,
+                                                           successfullySent: destURL)
+                #endif
             } catch {
                 let error = error as NSError
                 NSDebugLog("JSBServerlessLogger: Monitor.didSendURL: \(sourceURL): "

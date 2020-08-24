@@ -32,6 +32,13 @@ public protocol ServerlessLoggerErrorDelegate: class {
                 produced error: Logger.Error)
 }
 
+#if DEBUG
+public protocol ServerlessLoggerSuccessDelegate: class {
+    func logger(with configuration: ServerlessLoggerConfigurationProtocol,
+                successfullySent: URL)
+}
+#endif
+
 extension Logger {
     public enum Error: CustomNSError {
 

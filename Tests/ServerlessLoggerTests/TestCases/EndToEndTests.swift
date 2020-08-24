@@ -28,18 +28,34 @@
 import XCTest
 @testable import ServerlessLogger
 
+#if DEBUG
+/*
 class EndToEndTests: AsyncDeprecateTestCase {
 
     let mock: MockProtocol.Type = EndToEndMock1.self
 
     lazy var log = try! Logger(configuration: self.mock.configuration)
+    lazy var success = SuccessDelegateClosureStub()
 
-    /*
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        self.mock.configuration.successDelegate = self.success
+    }
+
+    override func tearDownWithError() throws {
+        try super.tearDownWithError()
+        self.mock.configuration.successDelegate = nil
+    }
+
     func test_withHMAC() {
+        let wait = self.newWait()
+        self.success.success = { _, _ in
+            wait(nil)
+        }
         self.log.error(NSError(domain: "JSBServerlessLoggingErrorDomain", code: -4444, userInfo: nil))
-        _ =  self.newWait()
         self.waitSuperLong()
     }
- */
 
 }
+*/
+#endif

@@ -25,6 +25,7 @@
 //
 //
 
+import Foundation
 import ServerlessLogger
 
 class ErrorDelegateClosureStub: ServerlessLoggerErrorDelegate {
@@ -36,3 +37,14 @@ class ErrorDelegateClosureStub: ServerlessLoggerErrorDelegate {
         self.error!(error, configuration)
     }
 }
+
+#if DEBUG
+class SuccessDelegateClosureStub: ServerlessLoggerSuccessDelegate {
+
+    var success: ((URL, ServerlessLoggerConfigurationProtocol) -> Void)?
+
+    func logger(with configuration: ServerlessLoggerConfigurationProtocol, successfullySent url: URL) {
+        self.success!(url, configuration)
+    }
+}
+#endif
