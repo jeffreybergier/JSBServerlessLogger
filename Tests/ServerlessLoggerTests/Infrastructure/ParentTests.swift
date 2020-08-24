@@ -28,7 +28,7 @@
 import XCTest
 @testable import ServerlessLogger
 
-class GenericTest: XCTestCase {
+class AsyncTestCase: XCTestCase {
 
     typealias FulfillClosure = (((() -> Void)?) -> Void)
 
@@ -72,17 +72,33 @@ class GenericTest: XCTestCase {
     func waitLong() {
         self.waitForExpectations(timeout: 1.0, handler: nil)
     }
-
-    @available(*, unavailable, message:"Use `waitShort()` or other variant in combination with `newWait()`")
-    override func wait(for: [XCTestExpectation], timeout: TimeInterval) { }
-
-    @available(*, unavailable, message:"Use `waitShort()` or other variant in combination with `newWait()`")
-    override func wait(for: [XCTestExpectation],
-                       timeout: TimeInterval,
-                       enforceOrder: Bool) { }
 }
 
-class ParentTest: GenericTest {
+class AsyncDeprecateTestCase: AsyncTestCase {
+    @available(*, deprecated, message:"Use `waitShort()` or other variant in combination with `newWait()`")
+    override func wait(for waits: [XCTestExpectation],
+                       timeout: TimeInterval)
+    {
+        super.wait(for: waits, timeout: timeout)
+    }
+
+    @available(*, deprecated, message:"Use `waitShort()` or other variant in combination with `newWait()`")
+    override func wait(for: [XCTestExpectation],
+                       timeout: TimeInterval,
+                       enforceOrder: Bool)
+    {
+        super.wait(for: `for`, timeout: timeout, enforceOrder: enforceOrder)
+    }
+
+    @available(*, deprecated, message:"Use `waitShort()` or other variant in combination with `newWait()`")
+    override func waitForExpectations(timeout: TimeInterval,
+                                      handler: XCWaitCompletionHandler? = nil)
+    {
+        super.waitForExpectations(timeout: timeout, handler: handler)
+    }
+}
+
+class ParentTest: AsyncDeprecateTestCase {
 
     var fm: FileManagerClosureStub!
     var coor: NSFileCoordinatorClosureStub!
