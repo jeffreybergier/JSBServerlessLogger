@@ -35,6 +35,14 @@ class DestinationTests: ParentTest {
 
     lazy var dest = try! Logger.Destination<Event>.new(configuration: self.mock.configuration).get()
 
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        // Make sure stub is ready for Monitor.performOutboxCleanup
+        self.fm.contentsOfDirectoryAtURLIncludingPropertiesForKeysOptions = { _, _, _ in
+            return []
+        }
+    }
+
     func test_logic_isEnabledFor() {
         let wait1 = self.newWait(count: 3)
         self.fm.fileExistsAtPathIsDirectory = { path, isDirectory in

@@ -38,6 +38,10 @@ class MonitorTests: ParentTest {
 
     override func setUpWithError() throws {
         try super.setUpWithError()
+        // Make sure stub is ready for Monitor.performOutboxCleanup
+        self.fm.contentsOfDirectoryAtURLIncludingPropertiesForKeysOptions = { _, _, _ in
+            return []
+        }
         // configure the monitor's API stub
         self.monitor.apiClient = self.api
     }
@@ -223,7 +227,7 @@ class MonitorTests: ParentTest {
             try accessor(from, to)
         }
         self.monitor.performOutboxCleanup()
-        self.waitShort()
+        self.waitInstant()
     }
 
     func test_outboxCleanup_failure() {
@@ -251,6 +255,6 @@ class MonitorTests: ParentTest {
             }
         }
         self.monitor.performOutboxCleanup()
-        self.waitShort()
+        self.waitInstant()
     }
 }
