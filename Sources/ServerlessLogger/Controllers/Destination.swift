@@ -46,7 +46,8 @@ extension Logger {
         
         // MARK: Configuration
         public let configuration: ServerlessLoggerConfigurationProtocol
-        private let monitor: Monitor
+        // internal for testing only
+        internal let monitor: Monitor
         
         // MARK: INIT
         /// Use if you prefer untyped errors. Use `new()` if you prefer typed errors

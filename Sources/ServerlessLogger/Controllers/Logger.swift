@@ -59,6 +59,18 @@ open class Logger: XCGLogger {
             return .failure(error as! Logger.Error)
         }
     }
+
+    // Internal INIT for testing only
+    internal init(configuration: ServerlessLoggerConfigurationProtocol,
+                  includeDefaultXCGDestinations: Bool = true,
+                  includeDefaultJSBDestinations: Bool = true,
+                  destination: Destination<Event>)
+    {
+        self.configuration = configuration
+        super.init(identifier: configuration.identifier,
+                   includeDefaultDestinations: includeDefaultXCGDestinations)
+        self.add(destination: destination)
+    }
     
     // MARK: Custom
     // Attempt to extract NSError objects from log closure
