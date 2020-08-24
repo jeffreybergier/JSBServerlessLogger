@@ -100,3 +100,32 @@ enum Mock2: MockProtocol {
     }()
 }
 
+enum EndToEndMock1: MockProtocol {
+    static let onDisk: [OnDisk] = []
+    static let remoteURL = URLComponents(string: { () -> String in fatalError("Put your endpoint here") }())!
+    static let symmetricKey = SymmetricKey(data: Data(base64Encoded: { () -> String in fatalError("Put your secret here") }())!)
+    static var configuration: ServerlessLoggerConfigurationProtocol = {
+        let s = Logger.StorageLocation(baseDirectory: URL(string: "file:///baseDir")!,
+                                       appName: "UnitTests",
+                                       parentDirectory: "EndToEndMock1")
+        var c = Logger.DefaultSecureConfiguration(endpointURL: remoteURL,
+                                                  hmacKey: symmetricKey,
+                                                  storageLocation: s)
+        c.logLevel = .error
+        return c
+    }()
+    static var event: Event = {
+        let details = ServerlessLogger.Event.JSBLogDetails(level: .error,
+                                                           date: Date(),
+                                                           message: "EndToEndMock1EventMessage",
+                                                           functionName: "EndToEndMock1FunctionName",
+                                                           fileName: "EndToEndMock1FileName",
+                                                           lineNumber: 1000)
+        let event = ServerlessLogger.Event(incident: "EndToEndMock1Incident",
+                                           logDetails: details,
+                                           errorDetails: nil,
+                                           extraDetails: nil)
+        return event
+    }()
+}
+
