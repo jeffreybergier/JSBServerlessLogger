@@ -29,20 +29,30 @@
 import UIKit
 
 extension Event {
-    public struct DeviceDetails: Codable {
-        public let identifierForVendor = UIDevice.current.identifierForVendor
-        public let systemVersion       = UIDevice.current.systemVersion
-        public let systenName          = UIDevice.current.systemName
-        public let model               = UIDevice.current.model
-        public let localizedModel      = UIDevice.current.localizedModel
-        public let batteryLevel        = UIDevice.current.batteryLevel
-        public let batteryState        = UIDevice.current.batteryState.stringValue
-        public let storageRemaining: Int
-        public let storageTotal: Int
-        public let memoryFree:  Int
-        public let memoryUsed:  Int
-        public let memoryTotal: Int
+    public struct DeviceDetails: Codable, Equatable {
+        public var identifierForVendor: String
+        public var systemVersion: String
+        public var systenName: String
+        public var model: String
+        public var localizedModel: String
+        public var batteryLevel: Float
+        public var batteryState: String
+        public var storageRemaining: Int
+        public var storageTotal: Int
+        public var memoryFree:  Int
+        public var memoryUsed:  Int
+        public var memoryTotal: Int
         public init() {
+            // Basic UIDevice info
+            self.identifierForVendor = UIDevice.current.identifierForVendor?.uuidString ?? "-1"
+            self.systemVersion       = UIDevice.current.systemVersion
+            self.systenName          = UIDevice.current.systemName
+            self.model               = UIDevice.current.model
+            self.localizedModel      = UIDevice.current.localizedModel
+            self.batteryLevel        = UIDevice.current.batteryLevel
+            self.batteryState        = UIDevice.current.batteryState.stringValue
+
+            // Disk and memory resources
             let disk = diskResourceValues
             self.storageRemaining = (disk?.volumeAvailableCapacity ?? -1000000) / 1000000
             self.storageTotal = (disk?.volumeTotalCapacity ?? -1000000) / 1000000
