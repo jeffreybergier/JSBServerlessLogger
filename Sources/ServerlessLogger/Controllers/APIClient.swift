@@ -125,7 +125,7 @@ extension Logger.APIClient {
         }
         
         #if !os(macOS)
-        public func urlSessionDidFinishEvents(forBackgroundURLSession session: URLSession) { }
+        public func urlSessionDidFinishEvents(forBackgroundURLSession session: Foundation.URLSession) { }
         #endif
 
         public func didCompleteTask(originalRequestURL remoteURL: URL, responseStatusCode: Int, error: Error?) {
