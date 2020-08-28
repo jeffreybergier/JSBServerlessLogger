@@ -42,7 +42,7 @@ extension Event: ServerlessLoggerEventProtocol {
     
     public struct JSBLogDetails: Codable, Equatable {
         
-        public var level:        XCGLogger.Level
+        public var level:        String
         public var date:         Date
         public var message:      String
         public var functionName: String
@@ -50,7 +50,7 @@ extension Event: ServerlessLoggerEventProtocol {
         public var lineNumber:   Int
         
         public init(_ input: LogDetails) {
-            self.level        = input.level
+            self.level        = input.level.description
             self.date         = input.date
             self.message      = input.message
             self.functionName = input.functionName
@@ -65,7 +65,7 @@ extension Event: ServerlessLoggerEventProtocol {
                     fileName:     String,
                     lineNumber:   Int)
         {
-            self.level        = level
+            self.level        = level.description
             self.date         = date
             self.message      = message
             self.functionName = functionName
