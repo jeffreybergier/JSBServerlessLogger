@@ -79,7 +79,7 @@ class MonitorTests: LoggerTestCase {
             wait4(nil)
             try accessor(from, to)
         }
-        self.monitor.presentedItemDidChange()
+        self.monitor.processInboxItem(at: nil)
         self.waitShort()
     }
 
@@ -153,7 +153,7 @@ class MonitorTests: LoggerTestCase {
                 XCTAssertTrue(error.isKind(of: .moveToOutbox(NSError())))
             }
         }
-        self.monitor.presentedItemDidChange()
+        self.monitor.processInboxItem(at: nil)
         self.waitShort()
     }
 

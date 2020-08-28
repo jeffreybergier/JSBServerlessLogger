@@ -40,10 +40,12 @@ extension Logger {
             q.underlyingQueue = _presentedItemOperationQueue
             return q
         }()
+        // TODO: Populate this with INBOX and OUTBOX items during INIT
+        open var outboxItemsToRetry: [URL] = []
         open lazy var timer: Timer = {
             return Timer.scheduledTimer(timeInterval: self.configuration.timerDelay,
                                         target: self,
-                                        selector: #selector(self.presentedItemDidChange),
+                                        selector: #selector(self.outboxTimerFired(_:)),
                                         userInfo: nil,
                                         repeats: true)
         }()
@@ -57,61 +59,30 @@ extension Logger {
         public init(configuration: ServerlessLoggerConfigurationProtocol) {
             self.configuration = configuration
             super.init()
-            self.performOutboxCleanup()
             guard !IS_TESTING else { return }
-            // only fire the timer during init if we are not testing
+            // TODO: Populate outboxItemsToRetry with INBOX and OUTBOX items during INIT
             self.timer.fire()
         }
 
-        /// Only run on Init
-        open func performOutboxCleanup() {
-            let fm = FileManager.default
-            do {
-                                    // if this fails its OK, no need to report errors
-                let outboxLogURLs = try? fm.contentsOfDirectory(at: self.configuration.storageLocation.outboxURL,
-                                                                includingPropertiesForKeys: nil,
-                                                                options: [.skipsHiddenFiles,
-                                                                          .skipsPackageDescendants,
-                                                                          .skipsSubdirectoryDescendants])
-                let c = NSFileCoordinator.new(filePresenter: self)
-                for sourceURL in outboxLogURLs ?? [] {
-                    let destURL = self.configuration.storageLocation.inboxURL
-                                      .appendingPathComponent(sourceURL.lastPathComponent)
-                    try c.coordinateMoving(from: sourceURL, to: destURL) {
-                        try fm.moveItem(at: $0, to: $1)
-                    }
-                    self.apiClient.send(payload: destURL)
+        @objc open func outboxTimerFired(_ timer: Timer) {
+            _presentedItemOperationQueue.async {
+                while !self.outboxItemsToRetry.isEmpty {
+                    self.retryOutboxItem(at: self.outboxItemsToRetry.popLast()!)
                 }
-            } catch {
-                let error = error as NSError
-                NSDebugLog("JSBServerlessLogger: Monitor.performOutboxCleanup: "
-                            + "Failed to move file: \(error)")
-                self.configuration.errorDelegate?.logger(with: self.configuration,
-                                                         produced: .moveToInbox(error))
             }
         }
-    }
-}
 
-extension Logger.Monitor: NSFilePresenter {
-    open func presentedItemDidChange() {
-        _presentedItemOperationQueue.async {
-            let fm = FileManager.default
+        open func tryInboxItem(at sourceURL: URL) {
+            assert(sourceURL.deletingLastPathComponent() == self.configuration.storageLocation.inboxURL)
             do {
-                let inboxLogURLs = try fm.contentsOfDirectory(at: self.configuration.storageLocation.inboxURL,
-                                                              includingPropertiesForKeys: nil,
-                                                              options: [.skipsHiddenFiles,
-                                                                        .skipsPackageDescendants,
-                                                                        .skipsSubdirectoryDescendants])
+                let fm = FileManager.default
                 let c = NSFileCoordinator.new(filePresenter: self)
-                for sourceURL in inboxLogURLs {
-                    let destURL = self.configuration.storageLocation.outboxURL
-                                      .appendingPathComponent(sourceURL.lastPathComponent)
-                    try c.coordinateMoving(from: sourceURL, to: destURL) {
-                        try fm.moveItem(at: $0, to: $1)
-                    }
-                    self.apiClient.send(payload: destURL)
+                let destURL = self.configuration.storageLocation.outboxURL
+                    .appendingPathComponent(sourceURL.lastPathComponent)
+                try c.coordinateMoving(from: sourceURL, to: destURL) {
+                    try fm.moveItem(at: $0, to: $1)
                 }
+                self.apiClient.send(payload: destURL)
             } catch {
                 let error = error as NSError
                 NSDebugLog("JSBServerlessLogger: Monitor.presentedItemDidChange: "
@@ -120,11 +91,47 @@ extension Logger.Monitor: NSFilePresenter {
                                                          produced: .moveToOutbox(error))
             }
         }
+
+        open func retryOutboxItem(at sourceURL: URL) {
+            // TODO: If its outbox, do normal move code, if its inbox call inbox function
+            switch sourceURL.deletingLastPathComponent() {
+            case self.configuration.storageLocation.inboxURL:
+                self.tryInboxItem(at: sourceURL)
+            case self.configuration.storageLocation.outboxURL:
+                do {
+                    let fm = FileManager.default
+                    let c = NSFileCoordinator.new(filePresenter: self)
+                    let destURL = self.configuration.storageLocation.outboxURL
+                        .appendingPathComponent(sourceURL.lastPathComponent)
+                    try c.coordinateMoving(from: sourceURL, to: destURL) {
+                        try fm.moveItem(at: $0, to: $1)
+                    }
+                    self.apiClient.send(payload: destURL)
+                } catch {
+                    let error = error as NSError
+                    NSDebugLog("JSBServerlessLogger: Monitor.presentedItemDidChange: "
+                                + "Failed to move file: \(error)")
+                    self.configuration.errorDelegate?.logger(with: self.configuration,
+                                                             produced: .moveToOutbox(error))
+                }
+            default:
+                assertionFailure()
+            }
+        }
+    }
+}
+
+extension Logger.Monitor: NSFilePresenter {
+
+    open func presentedSubitemDidChange(at url: URL) {
+        precondition(url.deletingLastPathComponent() == self.configuration.storageLocation.inboxURL)
+        self.tryInboxItem(at: url)
     }
 }
 
 extension Logger.Monitor: ServerlessLoggerAPIClientDelegate {
     open func didSend(payload sourceURL: URL) {
+        precondition(sourceURL.deletingLastPathComponent() == self.configuration.storageLocation.outboxURL)
         _presentedItemOperationQueue.async {
             do {
                 let destURL = self.configuration.storageLocation.sentURL
@@ -149,22 +156,9 @@ extension Logger.Monitor: ServerlessLoggerAPIClientDelegate {
     }
     
     open func didFailToSend(payload sourceURL: URL) {
+        precondition(sourceURL.deletingLastPathComponent() == self.configuration.storageLocation.outboxURL)
         _presentedItemOperationQueue.async {
-            do {
-                let destURL = self.configuration.storageLocation.inboxURL
-                                  .appendingPathComponent(sourceURL.lastPathComponent)
-                let c = NSFileCoordinator.new(filePresenter: self)
-                let fm = FileManager.default
-                try c.coordinateMoving(from: sourceURL, to: destURL) {
-                    try fm.moveItem(at: $0, to: $1)
-                }
-            } catch {
-                let error = error as NSError
-                NSDebugLog("JSBServerlessLogger: Monitor.didFailToSendURL: "
-                           + "\(sourceURL): Failed to move item back to inbox: \(error)")
-                self.configuration.errorDelegate?.logger(with: self.configuration,
-                                                         produced: .moveToInbox(error))
-            }
+            self.outboxItemsToRetry.append(sourceURL)
         }
     }
 }
