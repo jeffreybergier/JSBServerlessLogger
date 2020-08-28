@@ -67,13 +67,14 @@ extension Logger {
         open func performOutboxCleanup() {
             let fm = FileManager.default
             do {
-                let outboxLogURLs = try fm.contentsOfDirectory(at: self.configuration.storageLocation.outboxURL,
-                                                               includingPropertiesForKeys: nil,
-                                                               options: [.skipsHiddenFiles,
-                                                                         .skipsPackageDescendants,
-                                                                         .skipsSubdirectoryDescendants])
+                                    // if this fails its OK, no need to report errors
+                let outboxLogURLs = try? fm.contentsOfDirectory(at: self.configuration.storageLocation.outboxURL,
+                                                                includingPropertiesForKeys: nil,
+                                                                options: [.skipsHiddenFiles,
+                                                                          .skipsPackageDescendants,
+                                                                          .skipsSubdirectoryDescendants])
                 let c = NSFileCoordinator.new(filePresenter: self)
-                for sourceURL in outboxLogURLs {
+                for sourceURL in outboxLogURLs ?? [] {
                     let destURL = self.configuration.storageLocation.inboxURL
                                       .appendingPathComponent(sourceURL.lastPathComponent)
                     try c.coordinateMoving(from: sourceURL, to: destURL) {
