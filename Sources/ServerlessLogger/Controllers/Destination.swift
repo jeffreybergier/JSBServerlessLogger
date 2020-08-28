@@ -77,7 +77,7 @@ extension Logger {
         open func processInternal(logDetails: LogDetails) { }
         
         open func isEnabledFor(level: XCGLogger.Level) -> Bool {
-            return level.rawValue >= self.outputLevel.rawValue
+            return level.rawValue >= self.configuration.logLevel.rawValue
         }
         
         // MARK: Write to Inbox
