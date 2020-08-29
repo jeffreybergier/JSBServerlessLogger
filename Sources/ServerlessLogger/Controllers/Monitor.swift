@@ -115,22 +115,7 @@ extension Logger {
             case self.configuration.storageLocation.inboxURL:
                 self.tryInboxItem(at: sourceURL)
             case self.configuration.storageLocation.outboxURL:
-                do {
-                    let fm = FileManager.default
-                    let c = NSFileCoordinator.new(filePresenter: self)
-                    let destURL = self.configuration.storageLocation.outboxURL
-                        .appendingPathComponent(sourceURL.lastPathComponent)
-                    try c.coordinateMoving(from: sourceURL, to: destURL) {
-                        try fm.moveItem(at: $0, to: $1)
-                    }
-                    self.apiClient.send(payload: destURL)
-                } catch {
-                    let error = error as NSError
-                    NSDebugLog("JSBServerlessLogger: Monitor.retryOutboxItem: "
-                                + "Failed to move file: \(error)")
-                    self.configuration.errorDelegate?.logger(with: self.configuration,
-                                                             produced: .moveToOutbox(error))
-                }
+                self.apiClient.send(payload: sourceURL)
             default:
                 assertionFailure()
             }
