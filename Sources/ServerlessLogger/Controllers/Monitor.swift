@@ -41,8 +41,8 @@ extension Logger {
             return q
         }()
         // TODO: Populate this with INBOX and OUTBOX items during INIT
-        open var outboxItemsToRetry: [URL] = []
-        open lazy var timer: Timer = {
+        open var retryStore: [URL] = []
+        open lazy var retryTimer: Timer = {
             return Timer.scheduledTimer(timeInterval: self.configuration.timerDelay,
                                         target: self,
                                         selector: #selector(self.outboxTimerFired(_:)),
@@ -60,14 +60,32 @@ extension Logger {
             self.configuration = configuration
             super.init()
             guard !IS_TESTING else { return }
-            // TODO: Populate outboxItemsToRetry with INBOX and OUTBOX items during INIT
-            self.timer.fire()
+            self.populateRetryStoreDuringINIT()
+            self.retryTimer.fire()
+        }
+
+        private func populateRetryStoreDuringINIT() {
+            let fm = FileManager.default
+            let dir = self.configuration.storageLocation
+            let opts: Foundation.FileManager.DirectoryEnumerationOptions = [
+                .skipsHiddenFiles,
+                .skipsSubdirectoryDescendants,
+                .skipsPackageDescendants
+            ]
+            var retries = (try? fm.contentsOfDirectory(at: dir.inboxURL,
+                                                 includingPropertiesForKeys: nil,
+                                                 options: opts)) ?? []
+            retries += (try? fm.contentsOfDirectory(at: dir.outboxURL,
+                                                    includingPropertiesForKeys: nil,
+                                                    options: opts)) ?? []
+            guard !retries.isEmpty else { return }
+            self.retryStore = retries
         }
 
         @objc open func outboxTimerFired(_ timer: Timer) {
             _presentedItemOperationQueue.async {
-                while !self.outboxItemsToRetry.isEmpty {
-                    self.retryOutboxItem(at: self.outboxItemsToRetry.popLast()!)
+                while !self.retryStore.isEmpty {
+                    self.retryOutboxItem(at: self.retryStore.popLast()!)
                 }
             }
         }
@@ -85,7 +103,7 @@ extension Logger {
                 self.apiClient.send(payload: destURL)
             } catch {
                 let error = error as NSError
-                NSDebugLog("JSBServerlessLogger: Monitor.presentedItemDidChange: "
+                NSDebugLog("JSBServerlessLogger: Monitor.tryInboxItem: "
                             + "Failed to move file: \(error)")
                 self.configuration.errorDelegate?.logger(with: self.configuration,
                                                          produced: .moveToOutbox(error))
@@ -93,7 +111,6 @@ extension Logger {
         }
 
         open func retryOutboxItem(at sourceURL: URL) {
-            // TODO: If its outbox, do normal move code, if its inbox call inbox function
             switch sourceURL.deletingLastPathComponent() {
             case self.configuration.storageLocation.inboxURL:
                 self.tryInboxItem(at: sourceURL)
@@ -109,7 +126,7 @@ extension Logger {
                     self.apiClient.send(payload: destURL)
                 } catch {
                     let error = error as NSError
-                    NSDebugLog("JSBServerlessLogger: Monitor.presentedItemDidChange: "
+                    NSDebugLog("JSBServerlessLogger: Monitor.retryOutboxItem: "
                                 + "Failed to move file: \(error)")
                     self.configuration.errorDelegate?.logger(with: self.configuration,
                                                              produced: .moveToOutbox(error))
@@ -158,7 +175,7 @@ extension Logger.Monitor: ServerlessLoggerAPIClientDelegate {
     open func didFailToSend(payload sourceURL: URL) {
         precondition(sourceURL.deletingLastPathComponent() == self.configuration.storageLocation.outboxURL)
         _presentedItemOperationQueue.async {
-            self.outboxItemsToRetry.append(sourceURL)
+            self.retryStore.append(sourceURL)
         }
     }
 }
