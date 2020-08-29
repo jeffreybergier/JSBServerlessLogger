@@ -29,6 +29,7 @@ import XCGLogger
 import Foundation
 
 extension XCGLogger.Level: Codable { }
+private let dateFormatter = ISO8601DateFormatter()
 
 // swiftlint:disable operator_usage_whitespace
 extension Event: ServerlessLoggerEventProtocol {
@@ -43,19 +44,19 @@ extension Event: ServerlessLoggerEventProtocol {
     public struct JSBLogDetails: Codable, Equatable {
         
         public var level:        String
-        public var date:         Date
+        public var date:         String
         public var message:      String
         public var functionName: String
         public var fileName:     String
         public var lineNumber:   Int
         
         public init(_ input: LogDetails) {
-            self.level        = input.level.description
-            self.date         = input.date
-            self.message      = input.message
-            self.functionName = input.functionName
-            self.fileName     = input.fileName
-            self.lineNumber   = input.lineNumber
+            self.init(level: input.level,
+                      date: input.date,
+                      message: input.message,
+                      functionName: input.functionName,
+                      fileName: input.fileName,
+                      lineNumber: input.lineNumber)
         }
 
         public init(level:        XCGLogger.Level,
@@ -66,10 +67,10 @@ extension Event: ServerlessLoggerEventProtocol {
                     lineNumber:   Int)
         {
             self.level        = level.description
-            self.date         = date
+            self.date         = dateFormatter.string(from: date)
             self.message      = message
             self.functionName = functionName
-            self.fileName     = fileName
+            self.fileName     = URL(fileURLWithPath: fileName).lastPathComponent
             self.lineNumber   = lineNumber
         }
     }
