@@ -52,11 +52,11 @@ extension Logger {
         // MARK: INIT
         /// Use if you prefer untyped errors. Use `new()` if you prefer typed errors
         public init(configuration: ServerlessLoggerConfigurationProtocol) throws {
+            try createDirectoryStructureIfNeeded(with: configuration.storageLocation)
             self.configuration = configuration
             self.monitor = Monitor(configuration: configuration)
             self.identifier = configuration.identifier + "Destination"
             self.outputLevel = configuration.logLevel
-            try self.createDirectoryStructureIfNeeded()
             NSFileCoordinator.addFilePresenter(self.monitor)
         }
 
@@ -109,31 +109,6 @@ extension Logger {
                 )
             }
         }
-        
-        // MARK: Destination Setup
-        
-        private func createDirectoryStructureIfNeeded() throws {
-            let fm = FileManager.default
-            let createDir: ((URL) throws -> Void) = { url in
-                var isDirectory = ObjCBool.init(false)
-                let exists = fm.fileExists(atPath: url.path, isDirectory: &isDirectory)
-                if exists && !isDirectory.boolValue {
-                    NSDebugLog("JSBServerlessLogger: File exists where directory should be: \(url)")
-                    throw Error.storageLocationCreate(nil)
-                }
-                if !exists {
-                    do {
-                        try fm.createDirectory(at: url, withIntermediateDirectories: true, attributes: nil)
-                    } catch {
-                        NSDebugLog("JSBServerlessLogger: Failed to create directory: \(url)")
-                        throw Error.storageLocationCreate(error as NSError)
-                    }
-                }
-            }
-            try createDir(self.configuration.storageLocation.inboxURL)
-            try createDir(self.configuration.storageLocation.outboxURL)
-            try createDir(self.configuration.storageLocation.sentURL)
-        }
     }
 }
 
@@ -151,4 +126,29 @@ extension Logger.StorageLocation {
     internal var sentURL: URL {
         return storageLocationURL.appendingPathComponent("Sent", isDirectory: true)
     }
+}
+
+// MARK: Destination Setup
+
+private func createDirectoryStructureIfNeeded(with location: Logger.StorageLocation) throws {
+    let fm = FileManager.default
+    let createDir: ((URL) throws -> Void) = { url in
+        var isDirectory = ObjCBool.init(false)
+        let exists = fm.fileExists(atPath: url.path, isDirectory: &isDirectory)
+        if exists && !isDirectory.boolValue {
+            NSDebugLog("JSBServerlessLogger: File exists where directory should be: \(url)")
+            throw Logger.Error.storageLocationCreate(nil)
+        }
+        if !exists {
+            do {
+                try fm.createDirectory(at: url, withIntermediateDirectories: true, attributes: nil)
+            } catch {
+                NSDebugLog("JSBServerlessLogger: Failed to create directory: \(url)")
+                throw Logger.Error.storageLocationCreate(error as NSError)
+            }
+        }
+    }
+    try createDir(location.inboxURL)
+    try createDir(location.outboxURL)
+    try createDir(location.sentURL)
 }
