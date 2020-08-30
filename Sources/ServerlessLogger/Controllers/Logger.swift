@@ -63,7 +63,6 @@ open class Logger: XCGLogger {
     // Internal INIT for testing only
     internal init(configuration: ServerlessLoggerConfigurationProtocol,
                   includeDefaultXCGDestinations: Bool = true,
-                  includeDefaultJSBDestinations: Bool = true,
                   destination: Destination<Event>)
     {
         self.configuration = configuration

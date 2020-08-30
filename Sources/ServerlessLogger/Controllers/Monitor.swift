@@ -31,16 +31,23 @@ extension Logger {
     /// `Logger.Monitor` is responsible for monitoring files in the inbox.
     /// Also it moves files around appropriately when sending from the Outbox
     /// or placing things into Sent once they have been sent
-    open class Monitor: NSObject {
+    open class Monitor: NSObject, NSFilePresenter {
 
         public let configuration: ServerlessLoggerConfigurationProtocol
-        open var presentedItemURL: URL? { self.configuration.storageLocation.inboxURL }
         open lazy var presentedItemOperationQueue: OperationQueue = {
             let q = OperationQueue()
             q.underlyingQueue = _presentedItemOperationQueue
             return q
         }()
-        // TODO: Populate this with INBOX and OUTBOX items during INIT
+        open lazy var presentedItemURL: URL? = {
+            // lazily populate the retry store once the NSFilePresenter
+            // is configured. Strangely there is no delegate method
+            // for `wasAddedAsFilePresenter`
+            self.populateRetryStore()
+            self.retryTimer.fire()
+            return self.configuration.storageLocation.inboxURL
+        }()
+
         open var retryStore: [URL] = []
         open lazy var retryTimer: Timer = {
             return Timer.scheduledTimer(timeInterval: self.configuration.timerDelay,
@@ -59,12 +66,9 @@ extension Logger {
         public init(configuration: ServerlessLoggerConfigurationProtocol) {
             self.configuration = configuration
             super.init()
-            guard !IS_TESTING else { return }
-            self.populateRetryStoreDuringINIT()
-            self.retryTimer.fire()
         }
 
-        private func populateRetryStoreDuringINIT() {
+        private func populateRetryStore() {
             let fm = FileManager.default
             let dir = self.configuration.storageLocation
             let opts: Foundation.FileManager.DirectoryEnumerationOptions = [
@@ -78,8 +82,7 @@ extension Logger {
             retries += (try? fm.contentsOfDirectory(at: dir.outboxURL,
                                                     includingPropertiesForKeys: nil,
                                                     options: opts)) ?? []
-            guard !retries.isEmpty else { return }
-            self.retryStore = retries
+            self.retryStore += retries
         }
 
         @objc open func outboxTimerFired(_ timer: Timer) {
@@ -123,8 +126,7 @@ extension Logger {
     }
 }
 
-extension Logger.Monitor: NSFilePresenter {
-
+extension Logger.Monitor {
     open func presentedSubitemDidChange(at url: URL) {
         precondition(url.deletingLastPathComponent() == self.configuration.storageLocation.inboxURL)
         self.tryInboxItem(at: url)
