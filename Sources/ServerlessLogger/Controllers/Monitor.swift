@@ -129,6 +129,7 @@ extension Logger {
 extension Logger.Monitor {
     open func presentedSubitemDidChange(at url: URL) {
         precondition(url.deletingLastPathComponent() == self.configuration.storageLocation.inboxURL)
+
         // verify the file has the correct extension
         let rhsExt = self.configuration.fileName.extension.lowercased()
         let lhsExt = url.pathExtension.lowercased()
@@ -136,13 +137,14 @@ extension Logger.Monitor {
             NSDebugLog("JSBServerlessLogger: Monitor.presentedSubitemDidChange: Expected extension: \(rhsExt), Received: \(lhsExt), URL: \(url)")
             return
         }
+        
+        // Resources returns NIL when the file doesn't exist, which is normal
+        // because this function is also called after the file is moved out of INBOX
         guard
             let resources = try? url.resourceValues(forKeys: [.fileSizeKey]),
             let lhsSize = resources.fileSize
-        else {
-            NSDebugLog("JSBServerlessLogger: Monitor.presentedSubitemDidChange: URL appears not to exist: \(url)")
-            return
-        }
+        else { return }
+
         // verify the file size is less than the size limit
         let rhsSize = self.configuration.fileName.sizeLimit
         guard lhsSize <= rhsSize else {

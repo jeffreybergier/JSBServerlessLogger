@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 const aws = require('aws-sdk');
 const ses = new aws.SES({region: 'us-east-2'});
-const DEBUG = false;
+const DEBUG = process.env.DEBUG_MODE === 'DEBUG';
 const kSecretKey = process.env.SECRET;
 const kEmailFrom = process.env.EMAIL_FROM;
 const kEmailTo   = process.env.EMAIL_TO;
@@ -33,7 +33,7 @@ exports.handler = async (event, context, callback) => {
     // do HMAC signature verification
     const secretKey = Buffer.from(kSecretKey, 'base64');
     const requestBody = Buffer.from(event.body, 'base64');
-    const lhsSignatureB64 = event.queryStringParameters.mac.replace(' ', '+');
+    const lhsSignatureB64 = event.queryStringParameters.mac.replace(/\s/g, '+');
     const rhsSignature = crypto
                             .createHmac('sha256', secretKey)
                             .update(requestBody)
