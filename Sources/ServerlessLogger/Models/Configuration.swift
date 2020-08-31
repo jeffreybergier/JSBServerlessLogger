@@ -184,7 +184,7 @@ extension Logger {
                     fileName:          Logger.FileName                = .init(),
                     extraDetails:      Event.ExtraDetails?            = nil,
                     logLevel:          XCGLogger.Level                = .error,
-                    timerDelay:        TimeInterval                   = 20, //2*60,
+                    timerDelay:        TimeInterval                   = 2*60,
                     backgroundSession: Bool                           = false,
                     errorDelegate:     ServerlessLoggerErrorDelegate? = nil)
         {
