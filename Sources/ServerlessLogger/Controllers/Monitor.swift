@@ -40,22 +40,26 @@ extension Logger {
             return q
         }()
         open lazy var presentedItemURL: URL? = {
-            // lazily populate the retry store once the NSFilePresenter
-            // is configured. Strangely there is no delegate method
-            // for `wasAddedAsFilePresenter`
-            self.populateRetryStore()
-            self.retryTimer.fire()
+            // This is called on an arbitary thread
+            _presentedItemOperationQueue.async {
+                // lazily populate the retry store once the NSFilePresenter
+                // is configured. Strangely there is no delegate method
+                // for `wasAddedAsFilePresenter`
+                self.populateRetryStore()
+                // Timers must be created on main thread
+                DispatchQueue.main.async {
+                    self.retryTimer.fire()
+                }
+            }
             return self.configuration.storageLocation.inboxURL
         }()
 
         open var retryStore: [URL] = []
-        open lazy var retryTimer: Timer = {
-            return Timer.scheduledTimer(timeInterval: self.configuration.timerDelay,
-                                        target: self,
-                                        selector: #selector(self.outboxTimerFired(_:)),
-                                        userInfo: nil,
-                                        repeats: true)
-        }()
+        open lazy var retryTimer = Timer.scheduledTimer(timeInterval: self.configuration.timerDelay,
+                                                        target: self,
+                                                        selector: #selector(self.retryTimerFired(_:)),
+                                                        userInfo: nil,
+                                                        repeats: true)
 
         // Internal for testing only
         internal lazy var apiClient = APIClient(configuration: self.configuration, clientDelegate: self)
@@ -68,7 +72,10 @@ extension Logger {
             super.init()
         }
 
-        private func populateRetryStore() {
+        /// Populates the retry array manually.
+        /// Called only once when NSFilePresenter requests the presented URL
+        /// After that, the retryStore is managed automatically when items fail to send
+        open func populateRetryStore() {
             let fm = FileManager.default
             let dir = self.configuration.storageLocation
             let opts: Foundation.FileManager.DirectoryEnumerationOptions = [
@@ -85,7 +92,7 @@ extension Logger {
             self.retryStore += retries
         }
 
-        @objc open func outboxTimerFired(_ timer: Timer) {
+        @objc open func retryTimerFired(_ timer: Timer) {
             _presentedItemOperationQueue.async {
                 while !self.retryStore.isEmpty {
                     self.retryOutboxItem(at: self.retryStore.popLast()!)
@@ -137,7 +144,7 @@ extension Logger.Monitor {
             NSDebugLog("JSBServerlessLogger: Monitor.presentedSubitemDidChange: Expected extension: \(rhsExt), Received: \(lhsExt), URL: \(url)")
             return
         }
-        
+
         // Resources returns NIL when the file doesn't exist, which is normal
         // because this function is also called after the file is moved out of INBOX
         guard
