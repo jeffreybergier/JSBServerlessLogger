@@ -129,6 +129,26 @@ extension Logger {
 extension Logger.Monitor {
     open func presentedSubitemDidChange(at url: URL) {
         precondition(url.deletingLastPathComponent() == self.configuration.storageLocation.inboxURL)
+        // verify the file has the correct extension
+        let rhsExt = self.configuration.fileName.extension.lowercased()
+        let lhsExt = url.pathExtension.lowercased()
+        guard lhsExt == rhsExt else {
+            NSDebugLog("JSBServerlessLogger: Monitor.presentedSubitemDidChange: Expected extension: \(rhsExt), Received: \(lhsExt), URL: \(url)")
+            return
+        }
+        guard
+            let resources = try? url.resourceValues(forKeys: [.fileSizeKey]),
+            let lhsSize = resources.fileSize
+        else {
+            NSDebugLog("JSBServerlessLogger: Monitor.presentedSubitemDidChange: URL appears not to exist: \(url)")
+            return
+        }
+        // verify the file size is less than the size limit
+        let rhsSize = self.configuration.fileName.sizeLimit
+        guard lhsSize <= rhsSize else {
+            NSDebugLog("JSBServerlessLogger: Monitor.presentedSubitemDidChange: Expected size less than: \(rhsSize), Received: \(lhsSize), URL: \(url)")
+            return
+        }
         self.tryInboxItem(at: url)
     }
 }

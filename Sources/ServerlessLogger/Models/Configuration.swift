@@ -38,6 +38,8 @@ public protocol ServerlessLoggerConfigurationProtocol {
     var logLevel: XCGLogger.Level { get }
     /// Specifies where logs are stored during the network request
     var storageLocation: Logger.StorageLocation { get }
+    /// Specifies details about the files read and written from disk
+    var fileName: Logger.FileName { get }
     /// URL that the API Client uses to send PUT request
     var endpointURL: URLComponents { get }
     /// When an Event is added to the inbox because it was logged, there is no delay waiting for a timer.
@@ -87,6 +89,38 @@ extension Logger {
             self.parentDirectory = parentDirectory ?? "ServerlessLogger"
         }
     }
+
+    /// File name structure is `nameGenerator(event) + "." + extension`
+    public struct FileName {
+        /// Event being written is passed into closure.
+        /// Return a unique name so there are no file name conflicts.
+        /// Can't be generic because.... protocols... sorry.
+        /// Default uses `Event.incident` property.
+        public var generator: (Codable) -> String
+        /// Default is `json`
+        public var `extension`: String
+        /// If a file is larger than this size (in Bytes) it will be ignored.
+        /// Default is 2KB
+        public var sizeLimit: Int
+
+        /// Default closure for `FileName.generator`
+        public static let defaultGenerator: (Codable) -> String = { event in
+            if let event = event as? Event {
+                return event.incident
+            } else {
+                return UUID().uuidString
+            }
+        }
+
+        public init(generator: @escaping ((Codable) -> String) = defaultGenerator,
+                    `extension`: String = "json",
+                    sizeLimit: Int = 2000)
+        {
+            self.generator = generator
+            self.extension = `extension`
+            self.sizeLimit = sizeLimit
+        }
+    }
 }
 
 // swiftlint:disable operator_usage_whitespace
@@ -97,6 +131,7 @@ extension Logger {
         public var identifier:         String
         public var logLevel:           XCGLogger.Level
         public var storageLocation:    Logger.StorageLocation
+        public var fileName:           Logger.FileName
         public var timerDelay:         TimeInterval
         public var backgroundSession:  Bool
         public weak var errorDelegate: ServerlessLoggerErrorDelegate?
@@ -106,7 +141,8 @@ extension Logger {
 
         public init(identifier:        String                         = "JSBServerlessLogger",
                     endpointURL:       URLComponents,
-                    storageLocation:   Logger.StorageLocation         = Logger.StorageLocation(),
+                    storageLocation:   Logger.StorageLocation         = .init(),
+                    fileName:          Logger.FileName                = .init(),
                     extraDetails:      Event.ExtraDetails?            = nil,
                     logLevel:          XCGLogger.Level                = .error,
                     timerDelay:        TimeInterval                   = 2*60,
@@ -118,6 +154,7 @@ extension Logger {
             self.identifier        = identifier
             self.logLevel          = logLevel
             self.storageLocation   = storageLocation
+            self.fileName          = fileName
             self.timerDelay        = timerDelay
             self.backgroundSession = backgroundSession
             self.errorDelegate     = errorDelegate
@@ -132,6 +169,7 @@ extension Logger {
         public var identifier:         String
         public var logLevel:           XCGLogger.Level
         public var storageLocation:    Logger.StorageLocation
+        public var fileName:           Logger.FileName
         public var timerDelay:         TimeInterval
         public var backgroundSession:  Bool
         public weak var errorDelegate: ServerlessLoggerErrorDelegate?
@@ -143,6 +181,7 @@ extension Logger {
                     endpointURL:       URLComponents,
                     hmacKey:           SymmetricKey,
                     storageLocation:   Logger.StorageLocation         = Logger.StorageLocation(),
+                    fileName:          Logger.FileName                = .init(),
                     extraDetails:      Event.ExtraDetails?            = nil,
                     logLevel:          XCGLogger.Level                = .error,
                     timerDelay:        TimeInterval                   = 2*60,
@@ -155,6 +194,7 @@ extension Logger {
             self.identifier        = identifier
             self.logLevel          = logLevel
             self.storageLocation   = storageLocation
+            self.fileName          = fileName
             self.timerDelay        = timerDelay
             self.backgroundSession = backgroundSession
             self.errorDelegate     = errorDelegate
