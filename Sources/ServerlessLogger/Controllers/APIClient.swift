@@ -82,6 +82,8 @@ extension Logger  {
         open func send(payload onDiskURL: URL) {
             autoreleasepool {
                 var components = self.configuration.endpointURL
+                var insecure = true
+                #if canImport(CryptoKit)
                 if #available(iOS 13.0, OSX 10.15, watchOS 6.0, tvOS 13.0, *),
                    let secureConfig = self.configuration as? ServerlessLoggerHMACConfigurationProtocol,
                    let data = FileManager.default.contents(atPath: onDiskURL.path)
@@ -90,7 +92,10 @@ extension Logger  {
                     var queryItems = components.queryItems ?? []
                     queryItems.append(URLQueryItem(name: "mac", value: signature))
                     components.queryItems = queryItems
-                } else {
+                    insecure = false
+                }
+                #endif
+                if insecure {
                     NSDebugLog("JSBServerlessLogger: Sending payload without signature")
                 }
                 let remoteURL = components.url!

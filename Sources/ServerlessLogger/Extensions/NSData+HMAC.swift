@@ -25,6 +25,8 @@
 //
 //
 
+#if canImport(CryptoKit)
+
 import CryptoKit
 import Foundation
 
@@ -38,3 +40,5 @@ extension Data {
         return hashString
     }
 }
+
+#endif

@@ -26,7 +26,6 @@
 //
 
 import XCGLogger
-import CryptoKit
 import Foundation
 
 public protocol ServerlessLoggerConfigurationProtocol {
@@ -60,11 +59,6 @@ public protocol ServerlessLoggerConfigurationProtocol {
     #if DEBUG
     var successDelegate: ServerlessLoggerSuccessDelegate? { get set }
     #endif
-}
-
-@available(iOS 13.0, OSX 10.15, watchOS 6.0, tvOS 13.0, *)
-public protocol ServerlessLoggerHMACConfigurationProtocol: ServerlessLoggerConfigurationProtocol {
-    var hmacKey: SymmetricKey { get }
 }
 
 extension Logger {
@@ -160,7 +154,17 @@ extension Logger {
             self.errorDelegate     = errorDelegate
         }
     }
-    
+}
+
+#if canImport(CryptoKit)
+import CryptoKit
+
+@available(iOS 13.0, OSX 10.15, watchOS 6.0, tvOS 13.0, *)
+public protocol ServerlessLoggerHMACConfigurationProtocol: ServerlessLoggerConfigurationProtocol {
+    var hmacKey: SymmetricKey { get }
+}
+
+extension Logger {
     @available(iOS 13.0, OSX 10.15, watchOS 6.0, tvOS 13.0, *)
     public struct DefaultSecureConfiguration: ServerlessLoggerHMACConfigurationProtocol {
         public var endpointURL:        URLComponents
@@ -201,4 +205,7 @@ extension Logger {
         }
     }
 }
+
+#endif
+
 // swiftlint:enable operator_usage_whitespace
