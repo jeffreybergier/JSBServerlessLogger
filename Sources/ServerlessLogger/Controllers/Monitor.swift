@@ -31,14 +31,24 @@ extension Logger {
     /// `Logger.Monitor` is responsible for monitoring files in the inbox.
     /// Also it moves files around appropriately when sending from the Outbox
     /// or placing things into Sent once they have been sent
-    open class Monitor: NSObject, NSFilePresenter {
+    open class Monitor: NSObject {
+
+        // Internal for testing only
+        internal lazy var apiClient = APIClient(configuration: self.configuration, clientDelegate: self)
+        // Underlying queue used for `presentedItemOperationQueue`
+        private lazy var _presentedItemOperationQueue = DispatchQueue(label: configuration.identifier  + "Monitor",
+                                                                      qos: .utility)
 
         public let configuration: ServerlessLoggerConfigurationProtocol
+
+        /// Protocol conformance
         open lazy var presentedItemOperationQueue: OperationQueue = {
             let q = OperationQueue()
             q.underlyingQueue = _presentedItemOperationQueue
             return q
         }()
+
+        /// Protocol conformance
         open lazy var presentedItemURL: URL? = {
             // This is called on an arbitary thread
             _presentedItemOperationQueue.async {
@@ -54,18 +64,15 @@ extension Logger {
             return self.configuration.storageLocation.inboxURL
         }()
 
+        /// When an Item fails to send, it is added to the `retryStore`. During a specified
+        /// internval, the store is attempted to be resent via the `retryInboxOrOutboxItem` method
         open var retryStore: [URL] = []
+        /// Helps to automatically retry failed sends during a specified time interval
         open lazy var retryTimer = Timer.scheduledTimer(timeInterval: self.configuration.timerDelay,
                                                         target: self,
                                                         selector: #selector(self.retryTimerFired(_:)),
                                                         userInfo: nil,
                                                         repeats: true)
-
-        // Internal for testing only
-        internal lazy var apiClient = APIClient(configuration: self.configuration, clientDelegate: self)
-        
-        private lazy var _presentedItemOperationQueue = DispatchQueue(label: configuration.identifier  + "Monitor",
-                                                                      qos: .utility)
         
         public init(configuration: ServerlessLoggerConfigurationProtocol) {
             self.configuration = configuration
@@ -92,16 +99,24 @@ extension Logger {
             self.retryStore += retries
         }
 
+        /// Iterates through `retryStore` and calls `retryInboxOrOutboxItem` for each item
         @objc open func retryTimerFired(_ timer: Timer) {
             _presentedItemOperationQueue.async {
                 while !self.retryStore.isEmpty {
-                    self.retryOutboxItem(at: self.retryStore.popLast()!)
+                    self.retryInboxOrOutboxItem(at: self.retryStore.popLast()!)
                 }
             }
         }
 
+        /// Precondition, file must be in Inbox or else crash
+        /// Verifies the item meets all the requirements before sending:
+        /// 1) That the file is in the inbox
+        /// 2) It has the correct file extension
+        /// 3) It exists
+        /// 4) It is smaller than the file size limit configured
         open func tryInboxItem(at sourceURL: URL) {
             assert(sourceURL.deletingLastPathComponent() == self.configuration.storageLocation.inboxURL)
+            guard self.filePreconditionsMet(at: sourceURL) else { return }
             do {
                 let fm = FileManager.default
                 let c = NSFileCoordinator.new(filePresenter: self)
@@ -120,11 +135,13 @@ extension Logger {
             }
         }
 
-        open func retryOutboxItem(at sourceURL: URL) {
+        /// URL must be in inbox or outbox
+        open func retryInboxOrOutboxItem(at sourceURL: URL) {
             switch sourceURL.deletingLastPathComponent() {
             case self.configuration.storageLocation.inboxURL:
                 self.tryInboxItem(at: sourceURL)
             case self.configuration.storageLocation.outboxURL:
+                guard self.filePreconditionsMet(at: sourceURL) else { return }
                 self.apiClient.send(payload: sourceURL)
             default:
                 assertionFailure()
@@ -133,16 +150,30 @@ extension Logger {
     }
 }
 
-extension Logger.Monitor {
-    open func presentedSubitemDidChange(at url: URL) {
-        precondition(url.deletingLastPathComponent() == self.configuration.storageLocation.inboxURL)
+extension Logger.Monitor: NSFilePresenter {
+
+    /// Called when the Inbox changes
+    open func presentedSubitemDidChange(at sourceURL: URL) {
+        precondition(sourceURL.deletingLastPathComponent() == self.configuration.storageLocation.inboxURL)
+        self.tryInboxItem(at: sourceURL)
+    }
+
+    private func filePreconditionsMet(at url: URL) -> Bool {
+        switch url.deletingLastPathComponent() {
+        case self.configuration.storageLocation.inboxURL,
+             self.configuration.storageLocation.outboxURL:
+            break
+        default:
+            return false
+        }
 
         // verify the file has the correct extension
         let rhsExt = self.configuration.fileName.extension.lowercased()
         let lhsExt = url.pathExtension.lowercased()
         guard lhsExt == rhsExt else {
-            NSDebugLog("JSBServerlessLogger: Monitor.presentedSubitemDidChange: Expected extension: \(rhsExt), Received: \(lhsExt), URL: \(url)")
-            return
+            NSDebugLog("JSBServerlessLogger: Monitor.presentedSubitemDidChange: "
+                     + "Expected extension: \(rhsExt), Received: \(lhsExt), URL: \(url)")
+            return false
         }
 
         // Resources returns NIL when the file doesn't exist, which is normal
@@ -150,22 +181,28 @@ extension Logger.Monitor {
         guard
             let resources = try? url.resourceValues(forKeys: [.fileSizeKey]),
             let lhsSize = resources.fileSize
-        else { return }
+        else { return false }
 
         // verify the file size is less than the size limit
         let rhsSize = self.configuration.fileName.sizeLimit
         guard lhsSize <= rhsSize else {
-            NSDebugLog("JSBServerlessLogger: Monitor.presentedSubitemDidChange: Expected size less than: \(rhsSize), Received: \(lhsSize), URL: \(url)")
-            return
+            NSDebugLog("JSBServerlessLogger: Monitor.presentedSubitemDidChange: "
+                     + "Expected size less than: \(rhsSize), Received: \(lhsSize), URL: \(url)")
+            return false
         }
-        self.tryInboxItem(at: url)
+
+        return true
     }
 }
 
 extension Logger.Monitor: ServerlessLoggerAPIClientDelegate {
+
+    /// Moves the file from the Outbox to the Sent folder
+    /// precondition that the file must be in the outbox folder or else it crashes
     open func didSend(payload sourceURL: URL) {
         precondition(sourceURL.deletingLastPathComponent() == self.configuration.storageLocation.outboxURL)
         _presentedItemOperationQueue.async {
+            guard self.filePreconditionsMet(at: sourceURL) else { return }
             do {
                 let destURL = self.configuration.storageLocation.sentURL
                                   .appendingPathComponent(sourceURL.lastPathComponent)
@@ -187,10 +224,13 @@ extension Logger.Monitor: ServerlessLoggerAPIClientDelegate {
             }
         }
     }
-    
+
+    /// Adds the file to the `retyStore`. Leaves the file in the Outbox folder
+    /// precondition that the file must be in the outbox or else it crashes
     open func didFailToSend(payload sourceURL: URL) {
         precondition(sourceURL.deletingLastPathComponent() == self.configuration.storageLocation.outboxURL)
         _presentedItemOperationQueue.async {
+            guard self.filePreconditionsMet(at: sourceURL) else { return }
             self.retryStore.append(sourceURL)
         }
     }
