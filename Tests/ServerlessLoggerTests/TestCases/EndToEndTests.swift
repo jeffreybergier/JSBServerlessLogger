@@ -30,6 +30,7 @@ import XCTest
 
 #if DEBUG
 /*
+ // Uncomment and fill in missing pieces of EndToEndMock1 to run end to end tests
 class EndToEndTests: AsyncDeprecateTestCase {
 
     let mock: MockProtocol.Type = EndToEndMock1.self
