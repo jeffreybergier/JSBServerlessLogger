@@ -115,7 +115,8 @@ extension Logger {
         /// 3) It exists
         /// 4) It is smaller than the file size limit configured
         open func tryInboxItem(at sourceURL: URL) {
-            assert(sourceURL.deletingLastPathComponent().lastPathComponent == self.configuration.storageLocation.inboxURL.lastPathComponent)
+            precondition(sourceURL.deletingLastPathComponent().lastPathComponents(3)
+                         == self.configuration.storageLocation.inboxURL.lastPathComponents(3))
             guard self.filePreconditionsMet(at: sourceURL) else { return }
             do {
                 let fm = FileManager.default
@@ -154,7 +155,8 @@ extension Logger.Monitor: NSFilePresenter {
 
     /// Called when the Inbox changes
     open func presentedSubitemDidChange(at sourceURL: URL) {
-        precondition(sourceURL.deletingLastPathComponent().lastPathComponent == self.configuration.storageLocation.inboxURL.lastPathComponent)
+        precondition(sourceURL.deletingLastPathComponent().lastPathComponents(3)
+                     == self.configuration.storageLocation.inboxURL.lastPathComponents(3))
         self.tryInboxItem(at: sourceURL)
     }
 
@@ -200,7 +202,8 @@ extension Logger.Monitor: ServerlessLoggerAPIClientDelegate {
     /// Moves the file from the Outbox to the Sent folder
     /// precondition that the file must be in the outbox folder or else it crashes
     open func didSend(payload sourceURL: URL) {
-        precondition(sourceURL.deletingLastPathComponent().lastPathComponent == self.configuration.storageLocation.outboxURL.lastPathComponent)
+        precondition(sourceURL.deletingLastPathComponent().lastPathComponents(3)
+                     == self.configuration.storageLocation.outboxURL.lastPathComponents(3))
         _presentedItemOperationQueue.async {
             guard self.filePreconditionsMet(at: sourceURL) else { return }
             do {
@@ -228,7 +231,8 @@ extension Logger.Monitor: ServerlessLoggerAPIClientDelegate {
     /// Adds the file to the `retyStore`. Leaves the file in the Outbox folder
     /// precondition that the file must be in the outbox or else it crashes
     open func didFailToSend(payload sourceURL: URL) {
-        precondition(sourceURL.deletingLastPathComponent().lastPathComponent == self.configuration.storageLocation.outboxURL.lastPathComponent)
+        precondition(sourceURL.deletingLastPathComponent().lastPathComponents(3)
+                     == self.configuration.storageLocation.outboxURL.lastPathComponents(3))
         _presentedItemOperationQueue.async {
             guard self.filePreconditionsMet(at: sourceURL) else { return }
             self.retryStore.append(sourceURL)
