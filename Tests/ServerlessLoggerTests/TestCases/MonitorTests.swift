@@ -41,9 +41,38 @@ class MonitorTests: LoggerTestCase {
         self.monitor.apiClient = self.api
     }
 
+    /// Verify side-effects of presentedItemURL don't change
     func test_presentedItemURL() {
+        let wait1 = self.newWait(count: 2)
+        var count = 0
+        let outputURL = self.mock.onDisk.first!.url
+        self.fm.contentsOfDirectoryAtURLIncludingPropertiesForKeysOptions = { url, _, _ in
+            wait1 {
+                let inboxURL = self.mock.configuration.storageLocation.inboxURL
+                let outboxURL = self.mock.configuration.storageLocation.outboxURL
+                switch count {
+                case 0:
+                    XCTAssertEqual(url, inboxURL)
+                case 1:
+                    XCTAssertEqual(url, outboxURL)
+                default:
+                    XCTFail()
+                }
+                count += 1
+            }
+            return [outputURL]
+        }
         XCTAssertEqual(self.monitor.presentedItemURL!,
                        self.mock.configuration.storageLocation.inboxURL)
+        // prevent the timer from firing for the test
+        self.monitor.retryTimer.invalidate()
+        let wait2 = self.newWait()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            wait2 {
+                XCTAssertEqual(self.monitor.retryStore, [outputURL, outputURL])
+            }
+        }
+        self.waitShort()
     }
 
     func test_logic_presentedItemDidChange_success() {
