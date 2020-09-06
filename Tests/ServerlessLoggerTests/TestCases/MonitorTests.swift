@@ -311,4 +311,120 @@ class MonitorTests: LoggerTestCase {
         }
         self.wait(for: .medium)
     }
+
+    func test_preflight_error_location_1() {
+        let me = type(of: self.monitor)
+        let url = URL(string: "file:///one/two/three/four")!
+        let result = me.preflight(url: url, configuration: self.mock.configuration)
+        switch result {
+        case .success: XCTFail()
+        case .failure(let error): XCTAssertTrue(error.isKind(of: .location(url)))
+        }
+    }
+
+    func test_preflight_error_location_2() {
+        let me = type(of: self.monitor)
+        let url = URL(string: "file:///my/beginning/url")!
+            .appendingPathComponent(self.mock.configuration.storageLocation.inboxURL.lastPathComponents(2))
+            .appendingPathComponent("aFileName.txt")
+
+        let result = me.preflight(url: url, configuration: self.mock.configuration)
+        switch result {
+        case .success: XCTFail()
+        case .failure(let error): XCTAssertTrue(error.isKind(of: .location(url)))
+        }
+    }
+
+    func test_preflight_error_extension() {
+        let me = type(of: self.monitor)
+        let url = URL(string: "file:///my/beginning/url")!
+            .appendingPathComponent(self.mock.configuration.storageLocation.inboxURL.lastPathComponents(3))
+            .appendingPathComponent("aFileName.txt")
+
+        let result = me.preflight(url: url, configuration: self.mock.configuration)
+        switch result {
+        case .success: XCTFail()
+        case .failure(let error): XCTAssertTrue(error.isKind(of: .fileExtension(url)))
+        }
+    }
+
+    func test_preflight_error_noFile() {
+        let me = type(of: self.monitor)
+        let url = URL(string: "file:///my/beginning/url")!
+            .appendingPathComponent(self.mock.configuration.storageLocation.inboxURL.lastPathComponents(3))
+            .appendingPathComponent("aFileName.json")
+        let wait1 = self.newWait()
+        self.fm.sizeOfURL = { testURL in
+            wait1 {
+                XCTAssertEqual(url, testURL)
+            }
+            throw NSError(domain: "TestDomain", code: -4444, userInfo: nil)
+        }
+        let result = me.preflight(url: url, configuration: self.mock.configuration)
+        switch result {
+        case .success: XCTFail()
+        case .failure(let error): XCTAssertTrue(error.isKind(of: .fileNotPresent(url)))
+        }
+        self.wait(for: .instant)
+    }
+
+    func test_preflight_error_size() {
+        let me = type(of: self.monitor)
+        let url = URL(string: "file:///my/beginning/url")!
+            .appendingPathComponent(self.mock.configuration.storageLocation.inboxURL.lastPathComponents(3))
+            .appendingPathComponent("aFileName.json")
+        let wait1 = self.newWait()
+        self.fm.sizeOfURL = { testURL in
+            wait1 {
+                XCTAssertEqual(url, testURL)
+            }
+            return .init(value: self.mock.configuration.fileName.sizeLimit + 1)
+        }
+        let result = me.preflight(url: url, configuration: self.mock.configuration)
+        switch result {
+        case .success: XCTFail()
+        case .failure(let error): XCTAssertTrue(error.isKind(of: .fileSize(url)))
+        }
+        self.wait(for: .instant)
+    }
+
+    func test_preflight_success_inbox() {
+        let me = type(of: self.monitor)
+        let url = URL(string: "file:///my/beginning/url")!
+            .appendingPathComponent(self.mock.configuration.storageLocation.inboxURL.lastPathComponents(3))
+            .appendingPathComponent("aFileName.json")
+        let wait1 = self.newWait()
+        self.fm.sizeOfURL = { testURL in
+            wait1 {
+                XCTAssertEqual(url, testURL)
+            }
+            return .init(value: self.mock.configuration.fileName.sizeLimit)
+        }
+        let result = me.preflight(url: url, configuration: self.mock.configuration)
+        switch result {
+        case .success: break
+        case .failure: XCTFail()
+        }
+        self.wait(for: .instant)
+    }
+
+    func test_preflight_success_outbox() {
+        let me = type(of: self.monitor)
+        let url = URL(string: "file:///my/beginning/url")!
+            .appendingPathComponent(self.mock.configuration.storageLocation.outboxURL.lastPathComponents(3))
+            .appendingPathComponent("aFileName.json")
+        let wait1 = self.newWait()
+        self.fm.sizeOfURL = { testURL in
+            wait1 {
+                XCTAssertEqual(url, testURL)
+            }
+            return .init(value: self.mock.configuration.fileName.sizeLimit)
+        }
+        let result = me.preflight(url: url, configuration: self.mock.configuration)
+        switch result {
+        case .success: break
+        case .failure: XCTFail()
+        }
+        self.wait(for: .instant)
+    }
 }
