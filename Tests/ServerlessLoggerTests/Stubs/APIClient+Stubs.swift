@@ -31,6 +31,6 @@ import ServerlessLogger
 class APIClientClosureStub: Logger.APIClient {
     var sendPayload: ((URL) -> Void)?
     override func send(payload onDiskURL: URL) {
-        self.sendPayload?(onDiskURL)
+        self.sendPayload!(onDiskURL)
     }
 }

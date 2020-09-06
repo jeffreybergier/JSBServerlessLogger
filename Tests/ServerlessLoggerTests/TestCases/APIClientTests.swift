@@ -37,24 +37,26 @@ class APIClientMock1Tests: LoggerTestCase {
                                        sessionDelegate: self.sessionDelegate)
 
     func test_send_secure() {
-        self.fm.contentsAtPath = { _ in self.mock.onDisk.first!.1 }
-        let wait1 = self.newWait()
-        self.session.uploadTaskWithRequestFromFile = { request, onDiskURL in
-            wait1() {
+        let sourceURL = self.mock.onDisk.first!.url
+        let sourceData = self.mock.onDisk.first!.data
+        self.fm.contentsAtPath = { _ in sourceData }
+        let wait1 = self.newWait(description: "Wait1")
+        self.session.uploadTaskWithRequestFromFile = { request, destURL in
+            wait1 {
                 XCTAssertEqual(request.url!.absoluteString,
                                "https://www.this-is-a-test.com?mac=BAlnJZfKW/66t0kguloks5YuDMTRuy3nhUc26YdftBE%3D")
-                XCTAssertEqual(self.mock.onDisk.first!.url, onDiskURL)
+                XCTAssertEqual(sourceURL, destURL)
             }
             return FakeUploadTask
         }
-        let wait2 = self.newWait()
+        let wait2 = self.newWait(description: "Wait2")
         self.session.resumeTask = { _ in
             wait2(nil)
         }
         XCTAssertTrue(self.sessionDelegate.inFlight.isEmpty)
-        self.client.send(payload: self.mock.onDisk.first!.url)
+        self.client.send(payload: sourceURL)
         XCTAssertEqual(self.sessionDelegate.inFlight.count, 1)
-        self.wait(for: .instant)
+        self.wait(for: .short)
     }
 }
 
