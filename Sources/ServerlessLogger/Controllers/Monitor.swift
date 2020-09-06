@@ -165,6 +165,9 @@ extension Logger.Monitor: NSFilePresenter {
 
     /// Called when the Inbox changes
     open func presentedSubitemDidChange(at sourceURL: URL) {
+        // Skip any files passed that are hidden.
+        // They are usually the result of atomic writes.
+        guard !sourceURL.lastPathComponent.starts(with: ".") else { return }
         self.tryInboxItem(at: sourceURL)
     }
 
