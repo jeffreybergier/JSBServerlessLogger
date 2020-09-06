@@ -29,12 +29,19 @@ import XCTest
 
 class AsyncTestCase: XCTestCase {
 
+    enum Delay: TimeInterval {
+        case instant = 0.0, short = 0.1, medium = 0.5, long = 1.0, superLong = 10.0
+    }
+
     typealias FulfillClosure = (((() -> Void)?) -> Void)
 
     /// Execute this closure to fulfill the `XCTestExpectation`
     /// Also, pass in a new closure to execute validation tests before fulfilling
     /// Also, this is all guaranteed to happen on the main thread as required by`XCTAssert`.
-    func newWait(description: String = "🤷‍♀️", count: Int = 1) -> FulfillClosure {
+    func newWait(description: String = "🤷‍♀️",
+                 count: Int = 1)
+                 -> FulfillClosure
+    {
         let wait = self.expectation(description: description)
         wait.expectedFulfillmentCount = count
         return { innerClosure in
@@ -56,36 +63,55 @@ class AsyncTestCase: XCTestCase {
         }
     }
 
+    func `do`(after delay: Delay,
+              description: String = "🤷‍♀️",
+              work: @escaping () -> Void)
+    {
+        let wait = self.newWait(description: description)
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay.rawValue) {
+            wait(work)
+        }
+    }
+
+    func wait(for delay: Delay) {
+        self.waitForExpectations(timeout: delay.rawValue, handler: nil)
+    }
+
+    @available(*, deprecated, message:"Use `wait(forDelay:)` or other variant in combination with `newWait()`")
     func waitInstant() {
-        self.waitForExpectations(timeout: 0.0, handler: nil)
+        self.wait(for: .instant)
     }
 
+    @available(*, deprecated, message:"Use `wait(forDelay:)` or other variant in combination with `newWait()`")
     func waitShort() {
-        self.waitForExpectations(timeout: 0.1, handler: nil)
+        self.wait(for: .short)
     }
 
+    @available(*, deprecated, message:"Use `wait(forDelay:)` or other variant in combination with `newWait()`")
     func waitMedium() {
-        self.waitForExpectations(timeout: 0.5, handler: nil)
+        self.wait(for: .medium)
     }
 
+    @available(*, deprecated, message:"Use `wait(forDelay:)` or other variant in combination with `newWait()`")
     func waitLong() {
-        self.waitForExpectations(timeout: 1.0, handler: nil)
+        self.wait(for: .long)
     }
 
+    @available(*, deprecated, message:"Use `wait(forDelay:)` or other variant in combination with `newWait()`")
     func waitSuperLong() {
-        self.waitForExpectations(timeout: 10.0, handler: nil)
+        self.wait(for: .superLong)
     }
 }
 
 class AsyncDeprecateTestCase: AsyncTestCase {
-    @available(*, deprecated, message:"Use `waitShort()` or other variant in combination with `newWait()`")
+    @available(*, deprecated, message:"Use `wait(forDelay:)` or other variant in combination with `newWait()`")
     override func wait(for waits: [XCTestExpectation],
                        timeout: TimeInterval)
     {
         super.wait(for: waits, timeout: timeout)
     }
 
-    @available(*, deprecated, message:"Use `waitShort()` or other variant in combination with `newWait()`")
+    @available(*, deprecated, message:"Use `wait(forDelay:)` or other variant in combination with `newWait()`")
     override func wait(for: [XCTestExpectation],
                        timeout: TimeInterval,
                        enforceOrder: Bool)
@@ -93,7 +119,7 @@ class AsyncDeprecateTestCase: AsyncTestCase {
         super.wait(for: `for`, timeout: timeout, enforceOrder: enforceOrder)
     }
 
-    @available(*, deprecated, message:"Use `waitShort()` or other variant in combination with `newWait()`")
+    @available(*, deprecated, message:"Use `wait(forDelay:)` or other variant in combination with `newWait()`")
     override func waitForExpectations(timeout: TimeInterval,
                                       handler: XCWaitCompletionHandler? = nil)
     {

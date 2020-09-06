@@ -54,10 +54,19 @@ import Foundation
     
     func fileExists(atPath: String,
                     isDirectory: UnsafeMutablePointer<ObjCBool>?) -> Bool
+
+    func size(of url: URL) throws -> NSNumber
 }
 
 internal enum FileManager {
     internal static var `default`: FileManagerProtocol = Foundation.FileManager.default
 }
 
-extension Foundation.FileManager: FileManagerProtocol { }
+extension Foundation.FileManager: FileManagerProtocol {
+
+    func size(of url: URL) throws -> NSNumber {
+        let values = try url.resourceValues(forKeys: [.fileSizeKey])
+        return NSNumber(value: values.fileSize!)
+    }
+
+}

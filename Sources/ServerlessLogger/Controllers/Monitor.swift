@@ -191,12 +191,12 @@ extension Logger.Monitor: NSFilePresenter {
 
         // Resources returns NIL when the file doesn't exist, which is normal
         // because this function is also called after the file is moved out of INBOX
-        guard
-            let resources = try? url.resourceValues(forKeys: [.fileSizeKey]),
-            let lhsSize = resources.fileSize
-        else { return .failure(.fileNotPresent(url)) }
+        guard let _lhsSize = try? FileManager.default.size(of: url) else {
+            return .failure(.fileNotPresent(url))
+        }
 
         // verify the file size is less than the size limit
+        let lhsSize = _lhsSize.intValue
         let rhsSize = configuration.fileName.sizeLimit
         guard lhsSize <= rhsSize else {
             NSDebugLog("JSBServerlessLogger: Monitor.presentedSubitemDidChange: "

@@ -57,6 +57,10 @@ class FileManagerStubParent: FileManagerProtocol {
     func fileExists(atPath: String, isDirectory: UnsafeMutablePointer<ObjCBool>?) -> Bool {
         fatalError()
     }
+
+    func size(of url: URL) throws -> NSNumber {
+        fatalError()
+    }
 }
 
 class FileManagerClosureStub: FileManagerStubParent {
@@ -64,6 +68,8 @@ class FileManagerClosureStub: FileManagerStubParent {
     var contentsAtPath: ((String) -> Data?)?
 
     var moveItemAtURLtoURL: ((URL, URL) throws -> Void)?
+
+    var sizeOfURL: ((URL) throws -> NSNumber)?
 
     var contentsOfDirectoryAtURLIncludingPropertiesForKeysOptions:
         ((URL, [URLResourceKey]?, Foundation.FileManager.DirectoryEnumerationOptions) -> [URL])?
@@ -96,5 +102,9 @@ class FileManagerClosureStub: FileManagerStubParent {
 
     override func createFile(atPath: String, contents: Data?, attributes: [FileAttributeKey : Any]?) -> Bool {
         return self.createFileAtPathWithContentsAttributes!(atPath, contents, attributes)
+    }
+
+    override func size(of url: URL) throws -> NSNumber {
+        return try self.sizeOfURL!(url)
     }
 }

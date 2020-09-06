@@ -66,21 +66,18 @@ class MonitorTests: LoggerTestCase {
                        self.mock.configuration.storageLocation.inboxURL)
         // prevent the timer from firing for the test
         self.monitor.retryTimer.invalidate()
-        let wait2 = self.newWait()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-            wait2 {
-                XCTAssertEqual(self.monitor.retryStore, [outputURL, outputURL])
-            }
+        self.do(after: .short) {
+            XCTAssertEqual(self.monitor.retryStore, [outputURL, outputURL])
         }
-        self.waitShort()
+        self.wait(for: .medium)
     }
 
-    func test_logic_presentedItemDidChange_success() {
-        let wait1 = self.newWait()
+    func test_presentedSubitemDidChange_success() {
         let presentedItem = self.mock.onDisk.first!.url
-        self.fm.contentsOfDirectoryAtURLIncludingPropertiesForKeysOptions = { url, _, _ in
+        let wait1 = self.newWait()
+        self.fm.sizeOfURL = { _ in
             wait1(nil)
-            return [presentedItem]
+            return NSNumber(integerLiteral: self.mock.configuration.fileName.sizeLimit)
         }
         let wait2 = self.newWait()
         self.fm.moveItemAtURLtoURL = { from, to in
@@ -126,6 +123,11 @@ class MonitorTests: LoggerTestCase {
             wait2(nil)
             try accessor(from, to)
         }
+        let wait3 = self.newWait()
+        self.fm.sizeOfURL = { _ in
+            wait3(nil)
+            return NSNumber(integerLiteral: self.mock.configuration.fileName.sizeLimit)
+        }
         let payload = self.mock.configuration.storageLocation.outboxURL
                           .appendingPathComponent(self.mock.onDisk.first!.url.lastPathComponent)
         self.monitor.didSend(payload: payload)
@@ -133,35 +135,29 @@ class MonitorTests: LoggerTestCase {
     }
 
     func test_logic_didFailToSend_success() {
-        let wait1 = self.newWait()
-        self.fm.moveItemAtURLtoURL = { from, to in
-            wait1 {
-                // check that the file names match
-                XCTAssertEqual(self.mock.onDisk.first!.url.lastPathComponent, from.lastPathComponent)
-                XCTAssertEqual(from.lastPathComponent, to.lastPathComponent)
-                // check that from is the outbox
-                XCTAssertEqual(from.deletingLastPathComponent(), self.mock.configuration.storageLocation.outboxURL)
-                // check that to is the inbox
-                XCTAssertEqual(to.deletingLastPathComponent(), self.mock.configuration.storageLocation.inboxURL)
-            }
+        let wait3 = self.newWait()
+        self.fm.sizeOfURL = { _ in
+            wait3(nil)
+            return NSNumber(integerLiteral: self.mock.configuration.fileName.sizeLimit)
         }
-        let wait2 = self.newWait()
-        self.coor.coordinateMovingFromURLToURLByAccessor = { from, to, accessor in
-            wait2(nil)
-            try accessor(from, to)
-        }
+        XCTAssertTrue(self.monitor.retryStore.isEmpty)
         let payload = self.mock.configuration.storageLocation.outboxURL
                           .appendingPathComponent(self.mock.onDisk.first!.url.lastPathComponent)
         self.monitor.didFailToSend(payload: payload)
-        self.waitShort()
+        
+        self.do(after: .medium) {
+            XCTAssertEqual(self.monitor.retryStore, [payload])
+        }
+
+        self.wait(for: .long)
     }
 
-    func test_logic_presentedItemDidChange_failure() {
-        let wait1 = self.newWait()
+    func test_logic_presentedSubitemDidChange_failure() {
         let presentedItem = self.mock.onDisk.first!.url
-        self.fm.contentsOfDirectoryAtURLIncludingPropertiesForKeysOptions = { url, _, _ in
+        let wait1 = self.newWait()
+        self.fm.sizeOfURL = { _ in
             wait1(nil)
-            return [presentedItem]
+            return NSNumber(integerLiteral: self.mock.configuration.fileName.sizeLimit)
         }
         let wait2 = self.newWait()
         self.fm.moveItemAtURLtoURL = { from, to in
@@ -184,10 +180,12 @@ class MonitorTests: LoggerTestCase {
     }
 
     func test_logic_didSend_failure() {
+        let payload = self.mock.configuration.storageLocation.outboxURL
+                          .appendingPathComponent(self.mock.onDisk.first!.url.lastPathComponent)
         let wait1 = self.newWait()
-        self.fm.moveItemAtURLtoURL = { from, to in
+        self.fm.sizeOfURL = { _ in
             wait1(nil)
-            throw NSError(domain: "TestDomain", code: -4444, userInfo: nil)
+            return NSNumber(integerLiteral: self.mock.configuration.fileName.sizeLimit)
         }
         let wait2 = self.newWait()
         self.coor.coordinateMovingFromURLToURLByAccessor = { from, to, accessor in
@@ -195,38 +193,40 @@ class MonitorTests: LoggerTestCase {
             try accessor(from, to)
         }
         let wait3 = self.newWait()
-        self.errorDelegate.error = { error, config in
-            wait3 {
+        self.fm.moveItemAtURLtoURL = { from, to in
+            wait3(nil)
+            throw NSError(domain: "TestDomain", code: -4444, userInfo: nil)
+        }
+        let wait4 = self.newWait()
+        self.errorDelegate.error = { error, _ in
+            wait4 {
                 XCTAssertTrue(error.isKind(of: .moveToSent(NSError())))
             }
         }
-        let payload = self.mock.configuration.storageLocation.outboxURL
-                          .appendingPathComponent(self.mock.onDisk.first!.url.lastPathComponent)
         self.monitor.didSend(payload: payload)
-        self.waitShort()
+        self.wait(for: .short)
     }
 
     func test_logic_didFailToSend_failure() {
-        let wait1 = self.newWait()
-        self.fm.moveItemAtURLtoURL = { from, to in
-            wait1(nil)
-            throw NSError(domain: "TestDomain", code: -4444, userInfo: nil)
-        }
-        let wait2 = self.newWait()
-        self.coor.coordinateMovingFromURLToURLByAccessor = { from, to, accessor in
-            wait2(nil)
-            try accessor(from, to)
-        }
-        let wait3 = self.newWait()
-        self.errorDelegate.error = { error, config in
-            wait3 {
-                XCTAssertTrue(error.isKind(of: .moveToInbox(NSError())))
-            }
-        }
         let payload = self.mock.configuration.storageLocation.outboxURL
                           .appendingPathComponent(self.mock.onDisk.first!.url.lastPathComponent)
+        let wait1 = self.newWait()
+        self.fm.sizeOfURL = { _ in
+            wait1(nil)
+            return NSNumber(integerLiteral: self.mock.configuration.fileName.sizeLimit + 1)
+        }
+        let wait2 = self.newWait()
+        self.errorDelegate.error = { error, config in
+            wait2 {
+                XCTAssertTrue(error.isKind(of: .fileSize(payload)))
+            }
+        }
+        XCTAssertTrue(self.monitor.retryStore.isEmpty)
         self.monitor.didFailToSend(payload: payload)
-        self.waitShort()
+        self.do(after: .short) {
+            XCTAssertTrue(self.monitor.retryStore.isEmpty)
+        }
+        self.wait(for: .medium)
     }
 
     func test_outboxCleanup_success() {
