@@ -64,7 +64,7 @@ class DestinationTests: LoggerTestCase {
         XCTAssertTrue(self.dest.isEnabledFor(level: .alert))
         XCTAssertTrue(self.dest.isEnabledFor(level: .emergency))
         XCTAssertTrue(self.dest.isEnabledFor(level: .none))
-        self.waitInstant()
+        self.wait(for: .instant)
     }
 
     func test_logic_init_directoriesExist() {
@@ -82,7 +82,7 @@ class DestinationTests: LoggerTestCase {
             XCTFail()
         }
         _ = self.dest
-        self.waitInstant()
+        self.wait(for: .instant)
     }
 
     func test_logic_init_directoriesDontExist() {
@@ -115,7 +115,7 @@ class DestinationTests: LoggerTestCase {
             }
         }
         _ = self.dest
-        self.waitInstant()
+        self.wait(for: .instant)
     }
 
     func test_logic_init_error() {
@@ -130,7 +130,7 @@ class DestinationTests: LoggerTestCase {
         }
         let result = Logger.Destination<Event>.new(configuration: self.mock.configuration)
         XCTAssertTrue(result.error!.isKind(of: .storageLocationCreate(nil)))
-        self.waitInstant()
+        self.wait(for: .instant)
     }
 
     func test_appendToInbox_success() {
@@ -155,7 +155,7 @@ class DestinationTests: LoggerTestCase {
             return true
         }
         self.dest.appendToInbox(self.mock.event)
-        self.waitInstant()
+        self.wait(for: .instant)
     }
 
     func test_appendToInbox_error() {
@@ -185,7 +185,6 @@ class DestinationTests: LoggerTestCase {
             }
         }
         self.dest.appendToInbox(self.mock.event)
-        self.waitInstant()
+        self.wait(for: .instant)
     }
-    
 }

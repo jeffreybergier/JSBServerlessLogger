@@ -76,31 +76,6 @@ class AsyncTestCase: XCTestCase {
     func wait(for delay: Delay) {
         self.waitForExpectations(timeout: delay.rawValue, handler: nil)
     }
-
-    @available(*, deprecated, message:"Use `wait(forDelay:)` or other variant in combination with `newWait()`")
-    func waitInstant() {
-        self.wait(for: .instant)
-    }
-
-    @available(*, deprecated, message:"Use `wait(forDelay:)` or other variant in combination with `newWait()`")
-    func waitShort() {
-        self.wait(for: .short)
-    }
-
-    @available(*, deprecated, message:"Use `wait(forDelay:)` or other variant in combination with `newWait()`")
-    func waitMedium() {
-        self.wait(for: .medium)
-    }
-
-    @available(*, deprecated, message:"Use `wait(forDelay:)` or other variant in combination with `newWait()`")
-    func waitLong() {
-        self.wait(for: .long)
-    }
-
-    @available(*, deprecated, message:"Use `wait(forDelay:)` or other variant in combination with `newWait()`")
-    func waitSuperLong() {
-        self.wait(for: .superLong)
-    }
 }
 
 class AsyncDeprecateTestCase: AsyncTestCase {

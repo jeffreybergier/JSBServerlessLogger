@@ -54,7 +54,7 @@ class APIClientMock1Tests: LoggerTestCase {
         XCTAssertTrue(self.sessionDelegate.inFlight.isEmpty)
         self.client.send(payload: self.mock.onDisk.first!.url)
         XCTAssertEqual(self.sessionDelegate.inFlight.count, 1)
-        self.waitInstant()
+        self.wait(for: .instant)
     }
 }
 
@@ -84,7 +84,7 @@ class APIClientMock2Tests: LoggerTestCase {
         XCTAssertTrue(self.sessionDelegate.inFlight.isEmpty)
         self.client.send(payload: self.mock.onDisk.first!.url)
         XCTAssertEqual(self.sessionDelegate.inFlight.count, 1)
-        self.waitInstant()
+        self.wait(for: .instant)
     }
 }
 
@@ -129,7 +129,7 @@ class APIClientSessionDelegateTests: LoggerTestCase {
                                              responseStatusCode: 200,
                                              error: nil)
         XCTAssertTrue(self.sessionDelegate.inFlight.isEmpty)
-        self.waitInstant()
+        self.wait(for: .instant)
     }
 
     func test_didFail_error() {
@@ -152,7 +152,7 @@ class APIClientSessionDelegateTests: LoggerTestCase {
                                              responseStatusCode: 200,
                                              error: error)
         XCTAssertTrue(self.sessionDelegate.inFlight.isEmpty)
-        self.waitInstant()
+        self.wait(for: .instant)
     }
 
     func test_didFail_statusCode() {
@@ -174,6 +174,6 @@ class APIClientSessionDelegateTests: LoggerTestCase {
                                              responseStatusCode: 201,
                                              error: nil)
         XCTAssertTrue(self.sessionDelegate.inFlight.isEmpty)
-        self.waitInstant()
+        self.wait(for: .instant)
     }
 }

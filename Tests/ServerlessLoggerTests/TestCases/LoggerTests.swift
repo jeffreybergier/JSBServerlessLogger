@@ -66,7 +66,7 @@ class LoggerMock1Tests: LoggerTestCase {
             wait3(nil)
         }
         self.log.error(NSError(domain: "Test", code: -4444, userInfo: nil))
-        self.waitInstant()
+        self.wait(for: .instant)
     }
 
     func test_logDebug() {
@@ -85,7 +85,7 @@ class LoggerMock1Tests: LoggerTestCase {
             wait2(nil)
         }
         self.log.debug(NSError(domain: "Test", code: -4444, userInfo: nil))
-        self.waitInstant()
+        self.wait(for: .instant)
     }
 }
 
@@ -126,7 +126,7 @@ class LoggerMock2Tests: LoggerTestCase {
             wait3(nil)
         }
         self.log.debug(NSError(domain: "Test", code: -4444, userInfo: nil))
-        self.waitInstant()
+        self.wait(for: .instant)
     }
 
     func test_logVerbose() {
@@ -145,6 +145,6 @@ class LoggerMock2Tests: LoggerTestCase {
             wait2(nil)
         }
         self.log.verbose(NSError(domain: "Test", code: -4444, userInfo: nil))
-        self.waitInstant()
+        self.wait(for: .instant)
     }
 }

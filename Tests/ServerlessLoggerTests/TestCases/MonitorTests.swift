@@ -102,7 +102,7 @@ class MonitorTests: LoggerTestCase {
             try accessor(from, to)
         }
         self.monitor.presentedSubitemDidChange(at: presentedItem)
-        self.waitShort()
+        self.wait(for: .short)
     }
 
     func test_logic_didSend_success() {
@@ -131,7 +131,7 @@ class MonitorTests: LoggerTestCase {
         let payload = self.mock.configuration.storageLocation.outboxURL
                           .appendingPathComponent(self.mock.onDisk.first!.url.lastPathComponent)
         self.monitor.didSend(payload: payload)
-        self.waitShort()
+        self.wait(for: .short)
     }
 
     func test_logic_didFailToSend_success() {
@@ -176,7 +176,7 @@ class MonitorTests: LoggerTestCase {
             }
         }
         self.monitor.presentedSubitemDidChange(at: presentedItem)
-        self.waitShort()
+        self.wait(for: .short)
     }
 
     func test_logic_didSend_failure() {
