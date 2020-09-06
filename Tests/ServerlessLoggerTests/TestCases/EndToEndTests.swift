@@ -54,7 +54,7 @@ class EndToEndTests: AsyncDeprecateTestCase {
             wait(nil)
         }
         self.log.error(NSError(domain: "JSBServerlessLoggingErrorDomain", code: -4444, userInfo: nil))
-        self.waitSuperLong()
+        self.wait(for: .superLong)
     }
 
 }
