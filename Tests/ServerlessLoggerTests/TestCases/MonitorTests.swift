@@ -41,8 +41,13 @@ class MonitorTests: LoggerTestCase {
         self.monitor.apiClient = self.api
     }
 
+    override func tearDownWithError() throws {
+        try super.tearDownWithError()
+        self.api.sendPayload = nil
+    }
+
     /// Verify side-effects of presentedItemURL don't change
-    func test_presentedItemURL() {
+    func test_retryItemsPopulatedAtInit() {
         let wait1 = self.newWait(count: 2)
         var count = 0
         let outputURL = self.mock.onDisk.first!.url
@@ -62,14 +67,25 @@ class MonitorTests: LoggerTestCase {
             }
             return [outputURL]
         }
-        XCTAssertEqual(self.monitor.presentedItemURL!,
-                       self.mock.configuration.storageLocation.inboxURL)
         // prevent the timer from firing for the test
         self.monitor.retryTimer.invalidate()
+        // this triggers the everything to be populated
+        _  = self.monitor.presentedItemURL
         self.do(after: .short) {
             XCTAssertEqual(self.monitor.retryStore, [outputURL, outputURL])
         }
         self.wait(for: .medium)
+    }
+
+    func test_presentedItemURL() {
+        let wait1 = self.newWait(count: 2)
+        self.fm.contentsOfDirectoryAtURLIncludingPropertiesForKeysOptions = { _, _, _ in
+            wait1(nil)
+            return []
+        }
+        XCTAssertEqual(self.monitor.presentedItemURL!,
+                       self.mock.configuration.storageLocation.inboxURL)
+        self.wait(for: .short)
     }
 
     func test_presentedSubitemDidChange_success() {
@@ -229,15 +245,70 @@ class MonitorTests: LoggerTestCase {
         self.wait(for: .medium)
     }
 
-    func test_outboxCleanup_success() {
-        // let wait1 = self.newWait()
-        // let outboxItem = self.mock.configuration.storageLocation.outboxURL.appendingPathComponent("This-Is-A-Test.file")
-        // TODO: REDO this test as its assumptions are untrue now.
+    func test_retry_inbox() {
+        self.monitor.retryTimer.invalidate()
+        let sourceURL = self.mock.onDisk.first!.url
+        self.monitor.retryStore = [sourceURL]
+
+        let wait1 = self.newWait()
+        self.fm.sizeOfURL = { _ in
+            wait1(nil)
+            return NSNumber(value: self.mock.configuration.fileName.sizeLimit)
+        }
+        let wait2 = self.newWait()
+        self.coor.coordinateMovingFromURLToURLByAccessor = { from, to, accessor in
+            wait2(nil)
+            try accessor(from, to)
+        }
+        let wait3 = self.newWait()
+        self.fm.moveItemAtURLtoURL = { from, to in
+            wait3 {
+                XCTAssertEqual(to.deletingLastPathComponent(),
+                               self.mock.configuration.storageLocation.outboxURL)
+                XCTAssertEqual(from.lastPathComponent, to.lastPathComponent)
+            }
+        }
+        let wait4 = self.newWait()
+        self.api.sendPayload = { destURL in
+            wait4 {
+                XCTAssertEqual(destURL.deletingLastPathComponent(),
+                               self.mock.configuration.storageLocation.outboxURL)
+                XCTAssertEqual(sourceURL.lastPathComponent, destURL.lastPathComponent)
+            }
+        }
+
+        self.monitor.retryTimerFired(self.monitor.retryTimer)
+        self.do(after: .short) {
+            XCTAssertTrue(self.monitor.retryStore.isEmpty)
+        }
+        self.wait(for: .medium)
     }
 
-    func test_outboxCleanup_failure() {
-        // let wait1 = self.newWait()
-        // let outboxItem = self.mock.configuration.storageLocation.outboxURL.appendingPathComponent("This-Is-A-Test.file")
-        // TODO: REDO this test as its assumptions are untrue now.
+    func test_retry_outbox() {
+        self.monitor.retryTimer.invalidate()
+        let sourceURL = self.mock.configuration.storageLocation.outboxURL.appendingPathComponent(
+            self.mock.onDisk.first!.url.lastPathComponent
+        )
+        self.monitor.retryStore = [sourceURL]
+
+        let wait1 = self.newWait()
+        self.fm.sizeOfURL = { _ in
+            wait1(nil)
+            return NSNumber(value: self.mock.configuration.fileName.sizeLimit)
+        }
+        let wait2 = self.newWait()
+        self.api.sendPayload = { destURL in
+            wait2 {
+                XCTAssertEqual(destURL.deletingLastPathComponent(),
+                               self.mock.configuration.storageLocation.outboxURL)
+                XCTAssertEqual(sourceURL.lastPathComponent, destURL.lastPathComponent)
+            }
+        }
+
+        self.monitor.retryTimerFired(self.monitor.retryTimer)
+        self.do(after: .short) {
+            XCTAssertTrue(self.monitor.retryStore.isEmpty)
+        }
+        self.wait(for: .medium)
     }
 }
