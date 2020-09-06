@@ -34,26 +34,28 @@ extension Logger.Error {
         switch lhs {
         case .storageLocationCreate:
             if case .storageLocationCreate = rhs { return true }
-            return false
         case .codable:
             if case .codable = rhs { return true }
-            return false
         case .addToInbox:
             if case .addToInbox = rhs { return true }
-            return false
         case .moveToOutbox:
             if case .moveToOutbox = rhs { return true }
-            return false
         case .moveToSent:
             if case .moveToSent = rhs { return true }
-            return false
         case .moveToInbox:
             if case .moveToInbox = rhs { return true }
-            return false
         case .network:
             if case .network = rhs { return true }
-            return false
+        case .location:
+            if case .location = rhs { return true }
+        case .fileExtension:
+            if case .fileExtension = rhs { return true }
+        case .fileSize:
+            if case .fileSize = rhs { return true }
+        case .fileNotPresent:
+            if case .fileNotPresent = rhs { return true }
         }
+        return false
     }
 }
 

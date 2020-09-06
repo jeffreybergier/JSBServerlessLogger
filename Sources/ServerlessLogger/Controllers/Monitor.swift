@@ -108,31 +108,34 @@ extension Logger {
             }
         }
 
-        /// Precondition, file must be in Inbox or else crash
         /// Verifies the item meets all the requirements before sending:
         /// 1) That the file is in the inbox
         /// 2) It has the correct file extension
         /// 3) It exists
         /// 4) It is smaller than the file size limit configured
         open func tryInboxItem(at sourceURL: URL) {
-            precondition(sourceURL.deletingLastPathComponent().lastPathComponents(3)
-                         == self.configuration.storageLocation.inboxURL.lastPathComponents(3))
-            guard self.filePreconditionsMet(at: sourceURL) else { return }
-            do {
-                let fm = FileManager.default
-                let c = NSFileCoordinator.new(filePresenter: self)
-                let destURL = self.configuration.storageLocation.outboxURL
-                    .appendingPathComponent(sourceURL.lastPathComponent)
-                try c.coordinateMoving(from: sourceURL, to: destURL) {
-                    try fm.moveItem(at: $0, to: $1)
+            let preflight = Logger.Monitor.preflight(url: sourceURL, configuration: self.configuration)
+            switch preflight {
+            case .success:
+                do {
+                    let fm = FileManager.default
+                    let c = NSFileCoordinator.new(filePresenter: self)
+                    let destURL = self.configuration.storageLocation.outboxURL
+                        .appendingPathComponent(sourceURL.lastPathComponent)
+                    try c.coordinateMoving(from: sourceURL, to: destURL) {
+                        try fm.moveItem(at: $0, to: $1)
+                    }
+                    self.apiClient.send(payload: destURL)
+                } catch {
+                    let error = error as NSError
+                    NSDebugLog("JSBServerlessLogger: Monitor.tryInboxItem: "
+                                + "Failed to move file: \(error)")
+                    self.configuration.errorDelegate?.logger(with: self.configuration,
+                                                             produced: .moveToOutbox(error))
                 }
-                self.apiClient.send(payload: destURL)
-            } catch {
-                let error = error as NSError
-                NSDebugLog("JSBServerlessLogger: Monitor.tryInboxItem: "
-                            + "Failed to move file: \(error)")
-                self.configuration.errorDelegate?.logger(with: self.configuration,
-                                                         produced: .moveToOutbox(error))
+            case .failure(let error):
+                guard error.preflightFailed else { return }
+                self.configuration.errorDelegate?.logger(with: self.configuration, produced: error)
             }
         }
 
@@ -140,10 +143,17 @@ extension Logger {
         open func retryInboxOrOutboxItem(at sourceURL: URL) {
             switch sourceURL.deletingLastPathComponent().lastPathComponent {
             case self.configuration.storageLocation.inboxURL.lastPathComponent:
+                // preflight is done in tryInboxItem
                 self.tryInboxItem(at: sourceURL)
             case self.configuration.storageLocation.outboxURL.lastPathComponent:
-                guard self.filePreconditionsMet(at: sourceURL) else { return }
-                self.apiClient.send(payload: sourceURL)
+                let preflight = Logger.Monitor.preflight(url: sourceURL, configuration: self.configuration)
+                switch preflight {
+                case .success:
+                    self.apiClient.send(payload: sourceURL)
+                case .failure(let error):
+                    guard error.preflightFailed else { return }
+                    self.configuration.errorDelegate?.logger(with: self.configuration, produced: error)
+                }
             default:
                 assertionFailure()
             }
@@ -155,27 +165,28 @@ extension Logger.Monitor: NSFilePresenter {
 
     /// Called when the Inbox changes
     open func presentedSubitemDidChange(at sourceURL: URL) {
-        precondition(sourceURL.deletingLastPathComponent().lastPathComponents(3)
-                     == self.configuration.storageLocation.inboxURL.lastPathComponents(3))
         self.tryInboxItem(at: sourceURL)
     }
 
-    private func filePreconditionsMet(at url: URL) -> Bool {
-        switch url.deletingLastPathComponent() {
-        case self.configuration.storageLocation.inboxURL,
-             self.configuration.storageLocation.outboxURL:
+    open class func preflight(url: URL,
+                              configuration: ServerlessLoggerConfigurationProtocol)
+                              -> Result<Void, Logger.Error>
+    {
+        switch url.deletingLastPathComponent().lastPathComponents(3) {
+        case configuration.storageLocation.inboxURL.lastPathComponents(3),
+             configuration.storageLocation.outboxURL.lastPathComponents(3):
             break
         default:
-            return false
+            return .failure(.location(url))
         }
 
         // verify the file has the correct extension
-        let rhsExt = self.configuration.fileName.extension.lowercased()
+        let rhsExt = configuration.fileName.extension.lowercased()
         let lhsExt = url.pathExtension.lowercased()
         guard lhsExt == rhsExt else {
             NSDebugLog("JSBServerlessLogger: Monitor.presentedSubitemDidChange: "
                      + "Expected extension: \(rhsExt), Received: \(lhsExt), URL: \(url)")
-            return false
+            return .failure(.fileExtension(url))
         }
 
         // Resources returns NIL when the file doesn't exist, which is normal
@@ -183,17 +194,17 @@ extension Logger.Monitor: NSFilePresenter {
         guard
             let resources = try? url.resourceValues(forKeys: [.fileSizeKey]),
             let lhsSize = resources.fileSize
-        else { return false }
+        else { return .failure(.fileNotPresent(url)) }
 
         // verify the file size is less than the size limit
-        let rhsSize = self.configuration.fileName.sizeLimit
+        let rhsSize = configuration.fileName.sizeLimit
         guard lhsSize <= rhsSize else {
             NSDebugLog("JSBServerlessLogger: Monitor.presentedSubitemDidChange: "
                      + "Expected size less than: \(rhsSize), Received: \(lhsSize), URL: \(url)")
-            return false
+            return .failure(.fileSize(url))
         }
 
-        return true
+        return .success(())
     }
 }
 
@@ -202,28 +213,32 @@ extension Logger.Monitor: ServerlessLoggerAPIClientDelegate {
     /// Moves the file from the Outbox to the Sent folder
     /// precondition that the file must be in the outbox folder or else it crashes
     open func didSend(payload sourceURL: URL) {
-        precondition(sourceURL.deletingLastPathComponent().lastPathComponents(3)
-                     == self.configuration.storageLocation.outboxURL.lastPathComponents(3))
         _presentedItemOperationQueue.async {
-            guard self.filePreconditionsMet(at: sourceURL) else { return }
-            do {
-                let destURL = self.configuration.storageLocation.sentURL
-                                  .appendingPathComponent(sourceURL.lastPathComponent)
-                let c = NSFileCoordinator.new(filePresenter: self)
-                let fm = FileManager.default
-                try c.coordinateMoving(from: sourceURL, to: destURL) {
-                    try fm.moveItem(at: $0, to: $1)
+            let preflight = Logger.Monitor.preflight(url: sourceURL, configuration: self.configuration)
+            switch preflight {
+            case .success:
+                do {
+                    let destURL = self.configuration.storageLocation.sentURL
+                                      .appendingPathComponent(sourceURL.lastPathComponent)
+                    let c = NSFileCoordinator.new(filePresenter: self)
+                    let fm = FileManager.default
+                    try c.coordinateMoving(from: sourceURL, to: destURL) {
+                        try fm.moveItem(at: $0, to: $1)
+                    }
+                    #if DEBUG
+                    self.configuration.successDelegate?.logger(with: self.configuration,
+                                                               successfullySent: destURL)
+                    #endif
+                } catch {
+                    let error = error as NSError
+                    NSDebugLog("JSBServerlessLogger: Monitor.didSendURL: \(sourceURL): "
+                                + "Failed to move item back to sentbox: \(error)")
+                    self.configuration.errorDelegate?.logger(with: self.configuration,
+                                                             produced: .moveToSent(error))
                 }
-                #if DEBUG
-                self.configuration.successDelegate?.logger(with: self.configuration,
-                                                           successfullySent: destURL)
-                #endif
-            } catch {
-                let error = error as NSError
-                NSDebugLog("JSBServerlessLogger: Monitor.didSendURL: \(sourceURL): "
-                            + "Failed to move item back to sentbox: \(error)")
-                self.configuration.errorDelegate?.logger(with: self.configuration,
-                                                         produced: .moveToSent(error))
+            case .failure(let error):
+                guard error.preflightFailed else { return }
+                self.configuration.errorDelegate?.logger(with: self.configuration, produced: error)
             }
         }
     }
@@ -231,11 +246,29 @@ extension Logger.Monitor: ServerlessLoggerAPIClientDelegate {
     /// Adds the file to the `retyStore`. Leaves the file in the Outbox folder
     /// precondition that the file must be in the outbox or else it crashes
     open func didFailToSend(payload sourceURL: URL) {
-        precondition(sourceURL.deletingLastPathComponent().lastPathComponents(3)
-                     == self.configuration.storageLocation.outboxURL.lastPathComponents(3))
         _presentedItemOperationQueue.async {
-            guard self.filePreconditionsMet(at: sourceURL) else { return }
-            self.retryStore.append(sourceURL)
+            let preflight = Logger.Monitor.preflight(url: sourceURL, configuration: self.configuration)
+            switch preflight {
+            case .success:
+                self.retryStore.append(sourceURL)
+            case .failure(let error):
+                guard error.preflightFailed else { return }
+                self.configuration.errorDelegate?.logger(with: self.configuration, produced: error)
+            }
+        }
+    }
+}
+
+extension Logger.Error {
+    fileprivate var preflightFailed: Bool {
+        switch self {
+        case .location(let url), .fileExtension(let url), .fileSize(let url):
+            return true
+        case .fileNotPresent(_):
+            return false // file not present is a normal error and should not be thrown
+        default:
+            assertionFailure("Should not be hit")
+            return false
         }
     }
 }

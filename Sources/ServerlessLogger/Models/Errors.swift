@@ -50,6 +50,10 @@ extension Logger {
         case moveToSent(NSError)
         case moveToInbox(NSError)
         case network(NSError?)
+        case location(URL)
+        case fileExtension(URL)
+        case fileSize(URL)
+        case fileNotPresent(URL)
 
         // MARK: Protocol Conformance
         public static let errorDomain: String = "JSBServerlessLoggerErrorDomain"
@@ -69,6 +73,14 @@ extension Logger {
                 return -1005
             case .network:
                 return -1006
+            case .location:
+                return -1007
+            case .fileExtension:
+                return -1008
+            case .fileSize:
+                return -1009
+            case .fileNotPresent:
+                return -1010
             }
         }
         
