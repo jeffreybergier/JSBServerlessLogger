@@ -262,7 +262,7 @@ extension Logger.Monitor: ServerlessLoggerAPIClientDelegate {
 extension Logger.Error {
     fileprivate var preflightFailed: Bool {
         switch self {
-        case .location(let url), .fileExtension(let url), .fileSize(let url):
+        case .location, .fileExtension, .fileSize:
             return true
         case .fileNotPresent(_):
             return false // file not present is a normal error and should not be thrown
