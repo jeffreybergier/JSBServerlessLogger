@@ -152,16 +152,14 @@ extension Logger.APIClient {
         }
         
         public func urlSession(_: Foundation.URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
-            guard
-                let remoteURL = task.originalRequest?.url,
-                let response = task.response as? HTTPURLResponse
-            else {
+            guard let remoteURL = task.originalRequest?.url else {
                 let message = "JSBServerlessError: Task Completed but missing required information: \(task)"
                 NSDebugLog(message)
                 assertionFailure(message)
                 return
             }
-            self.didCompleteTask(originalRequestURL: remoteURL, responseStatusCode: response.statusCode, error: error)
+            let statusCode = (task.response as? HTTPURLResponse)?.statusCode ?? -1
+            self.didCompleteTask(originalRequestURL: remoteURL, responseStatusCode: statusCode, error: error)
         }
     }
 }
