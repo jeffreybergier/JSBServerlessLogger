@@ -18,7 +18,7 @@ A separate class called `Logger.Monitor` monitors the `Inbox` folder and when a 
 
 ### HMAC
 
-JSBServerlessLogger supports HMAC hashing. This requires iOS 13 and macOS 10.12. Older OS's do not have Apple's Crypto framework and therefore do not support HMAC hashing. HMAC allows the payload to be hashed with a Shared Secret that only you know. The server can then use the Shared Secret to make sure the hash sent by the client matches. It is highly recommended that you use this functionality as its the only way to be mostly sure that your app sent the request and not a malicious actor.
+`JSBServerlessLogger` supports HMAC hashing. This requires iOS 13 and macOS 10.12. Older OS's do not have Apple's Crypto framework and therefore do not support HMAC hashing. HMAC allows the payload to be hashed with a Shared Secret that only you know. The server can then use the Shared Secret to make sure the hash sent by the client matches. It is highly recommended that you use this functionality as its the only way to be mostly sure that your app sent the request and not a malicious actor.
 
 To use HMAC use `Logger.DefaultSecureConfiguration` or your own configuration that conforms to `ServerlessLoggerHMACConfigurationProtocol`. When this protocol is used the `JSBServerlessLogger` has the information needed to generate an HMAC Hash.
 
@@ -52,4 +52,41 @@ let base64Key = SymmetricKey(size: .bits256).withUnsafeBytes { Data(Array($0)).b
 
 ## Class overview
 
+In general, all classes are `open` and subclassable. In the future, I want to turn them all into protocols and make them optional pieces of the configuration objects.
+
+### `Logger: XCGLogger`
+
+Primary class to use this library. This is a subclass of `XCGLogger`. Store the instance of this as a singleton in your app to log events and errors just as you would with `XCGLogger`. This class can automatically instantiate a `Logger.Destination` instance and set it as a destination for logs. To do this set the `includeDefaultJSBDestinations` parameter of the initializer to `true`. `true` is the default value in the initializer as well.
+
+This class also overrides a behavior of `XCGLogger`. When you log an event, this class checks to see if the object logged is an NSError. If it is, it store the NSError in the `userInfo` dictionary of the logged event so that it can be read later. This allows a better JSON Dictionary to be sent to the server.
+
+### `Logger.Destination: DestinationProtocol`
+
+TBC
+
+`ServerlessLoggerEventProtocol`
+
+### `Logger.Monitor: NSFilePresenter`
+
+TBC
+
+### `Logger.APIClient`
+
+TBC
+
+
 ## How to contribute
+
+Before Contributing:
+
+- This project uses an off-the-shelf [Code of Conduct](./CODE_OF_CONDUCT.md). Read it and agree to it before contributing. 
+- Make sure there is an open issue with the issue you want to fix. You can create it yourself or review existing ones.
+- Update broken unit tests and write new unit tests for new functionality.
+
+How to Compile:
+
+1. Clone the repo: `git clone https://github.com/jeffreybergier/JSBServerlessLogger.git`
+1. Create an Xcode Project using Swift Package Manager: `swift package generate-xcodeproj`
+1. Open the Xcode Project in Xcode and Build and Test to make sure everything works.
+
+
