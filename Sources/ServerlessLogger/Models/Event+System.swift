@@ -26,7 +26,18 @@
 //
 
 import Foundation
+import Darwin.malloc
 
+/// Returns size of app in memory in MB
+internal var vmAppMemory: Int? {
+    var stats = malloc_statistics_t()
+    malloc_zone_statistics(nil, &stats)
+    let size = stats.size_allocated
+    guard size > 0 else { return nil }
+    return size / 1000000
+}
+
+/// Returns total memory statistics in MB
 internal var vmMemoryCount: (free: Int, used: Int, total: Int)? {
     // Below code is from StackOverflow by Nico
     // https://stackoverflow.com/a/8540665

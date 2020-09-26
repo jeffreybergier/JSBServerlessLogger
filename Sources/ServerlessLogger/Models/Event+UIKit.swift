@@ -128,7 +128,7 @@ extension Event.DeviceDetails {
             self.memoryFree  = memory?.free  ?? -1
             self.memoryUsed  = memory?.used  ?? -1
             self.memoryTotal = memory?.total ?? -1
-            self.memoryApp = -1 //TODO: Fix this
+            self.memoryApp   = vmAppMemory   ?? -1
         }
     }
 }
