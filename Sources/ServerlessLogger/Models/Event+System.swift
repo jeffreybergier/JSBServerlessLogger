@@ -80,3 +80,13 @@ internal var diskResourceValues: URLResourceValues? {
         : fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
     return try? dir?.resourceValues(forKeys: [.volumeAvailableCapacityKey, .volumeTotalCapacityKey])
 }
+
+internal var appContainerResourceValues: URLResourceValues? {
+    // Impossible to fake these URLResourceValue objects so it can't be tested
+    guard !IS_TESTING else { return nil }
+    let fm = FileManager.default
+    let dir = fm.urls(for: .documentDirectory, in: .userDomainMask)
+                .first?
+                .deletingLastPathComponent()
+    return try? dir?.resourceValues(forKeys: [.totalFileSizeKey])
+}

@@ -108,11 +108,14 @@ extension Event.DeviceDetails {
 
         public var storageRemaining: Int
         public var storageTotal: Int
+        public var appContainerTotal: Int
 
         public init() {
             let disk = diskResourceValues
             self.storageRemaining = (disk?.volumeAvailableCapacity ?? -1000000) / 1000000
             self.storageTotal = (disk?.volumeTotalCapacity ?? -1000000) / 1000000
+            let app = appContainerResourceValues
+            self.appContainerTotal = (app?.totalFileSize ?? -1000000) / 1000000
         }
     }
 
