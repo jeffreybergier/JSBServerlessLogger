@@ -36,11 +36,9 @@ extension Event {
         public var systemIdentifier: String
         public var batteryLevel: Float
         public var batteryState: String
-        public var storageRemaining: Int
-        public var storageTotal: Int
-        public var memoryFree:  Int
-        public var memoryUsed:  Int
-        public var memoryTotal: Int
+        public var diskDetails: DiskDetails
+        public var memoryDetails: MemoryDetails
+
         public init() {
             // Basic UIDevice info
             self.identifierForVendor = UIDevice.current.identifierForVendor?.uuidString ?? "-1"
@@ -51,13 +49,8 @@ extension Event {
             self.batteryState        = UIDevice.current.batteryState.stringValue
 
             // Disk and memory resources
-            let disk = diskResourceValues
-            self.storageRemaining = (disk?.volumeAvailableCapacity ?? -1000000) / 1000000
-            self.storageTotal = (disk?.volumeTotalCapacity ?? -1000000) / 1000000
-            let memory = vmMemoryCount
-            self.memoryFree  = memory?.free  ?? -1
-            self.memoryUsed  = memory?.used  ?? -1
-            self.memoryTotal = memory?.total ?? -1
+            self.diskDetails = .init()
+            self.memoryDetails = .init()
         }
     }
 }
@@ -96,23 +89,46 @@ extension UIDevice {
 
 extension Event {
     public struct DeviceDetails: Codable, Equatable {
-        
-        public var storageRemaining: Int
-        public var storageTotal: Int
-        public var memoryFree:  Int
-        public var memoryUsed:  Int
-        public var memoryTotal: Int
+
+        public var diskDetails: DiskDetails
+        public var memoryDetails: MemoryDetails
         
         public init() {
-            let disk = diskResourceValues
-            self.storageRemaining = (disk?.volumeAvailableCapacity ?? -1000000) / 1000000
-            self.storageTotal = (disk?.volumeTotalCapacity ?? -1000000) / 1000000
-            let memory = vmMemoryCount
-            self.memoryFree  = memory?.free  ?? -1
-            self.memoryUsed  = memory?.used  ?? -1
-            self.memoryTotal = memory?.total ?? -1
+            self.diskDetails = .init()
+            self.memoryDetails = .init()
         }
     }
 }
 
 #endif
+
+extension Event.DeviceDetails {
+
+    public struct DiskDetails: Codable, Equatable {
+
+        public var storageRemaining: Int
+        public var storageTotal: Int
+
+        public init() {
+            let disk = diskResourceValues
+            self.storageRemaining = (disk?.volumeAvailableCapacity ?? -1000000) / 1000000
+            self.storageTotal = (disk?.volumeTotalCapacity ?? -1000000) / 1000000
+        }
+    }
+
+    public struct MemoryDetails: Codable, Equatable {
+
+        public var memoryFree:  Int
+        public var memoryUsed:  Int
+        public var memoryTotal: Int
+        public var memoryApp: Int
+
+        public init() {
+            let memory = vmMemoryCount
+            self.memoryFree  = memory?.free  ?? -1
+            self.memoryUsed  = memory?.used  ?? -1
+            self.memoryTotal = memory?.total ?? -1
+            self.memoryApp = -1 //TODO: Fix this
+        }
+    }
+}
