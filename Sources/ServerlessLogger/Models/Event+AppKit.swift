@@ -30,8 +30,31 @@ import AppKit
 
 extension Event.DeviceDetails {
     public struct HardwareDetails: Codable, Equatable {
-        // TODO: Fill this in later
-        public init() { }
+
+        public var systemVersion: String
+        public var systemOS: String = "macOS"
+        public var systemIdentifier: String
+
+        public init() {
+            let pi = ProcessInfo.processInfo
+            self.systemVersion = pi.operatingSystemVersionString
+            self.systemIdentifier = pi.systemIdentifier
+        }
+    }
+}
+
+extension ProcessInfo {
+    // internal for testing only
+    /// Returns the MacBook(7,1) or similar
+    /// Returns -1 if there was an error fetching this
+    var systemIdentifier: String {
+        // Code from https://stackoverflow.com/a/25467259
+        var size = 0
+        sysctlbyname("hw.model", nil, &size, nil, 0)
+        guard size > 0 else { return "-1" }
+        var output = [CChar](repeating: 0, count: size)
+        sysctlbyname("hw.model", &output, &size, nil, 0)
+        return String(cString: output)
     }
 }
 

@@ -54,10 +54,13 @@ public struct Event: Codable, Equatable {
 }
 
 extension Event {
+
+    /// Extra details are added to each event. Use this to store UserID or any other useful iniformation
     public struct ExtraDetails: Codable, Equatable {
         var userID: String?
         var userInfo: [String: String]? // TODO: Replace value type with anything codable
     }
+    
 }
 
 extension Event {
