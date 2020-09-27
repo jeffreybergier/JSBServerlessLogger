@@ -30,27 +30,36 @@ import UIKit
 
 extension Event {
     public struct DeviceDetails: Codable, Equatable {
+
         public var identifierForVendor: String
+        public var hardwareDetails: HardwareDetails
+        public var diskDetails: DiskDetails
+        public var memoryDetails: MemoryDetails
+
+        public init() {
+            self.identifierForVendor = UIDevice.current.identifierForVendor?.uuidString ?? "-1"
+            self.hardwareDetails     = .init()
+            self.diskDetails         = .init()
+            self.memoryDetails       = .init()
+        }
+    }
+}
+
+extension Event.DeviceDetails {
+    public struct HardwareDetails: Codable, Equatable {
+
         public var systemVersion: String
         public var systemOS: String
         public var systemIdentifier: String
         public var batteryLevel: Float
         public var batteryState: String
-        public var diskDetails: DiskDetails
-        public var memoryDetails: MemoryDetails
 
         public init() {
-            // Basic UIDevice info
-            self.identifierForVendor = UIDevice.current.identifierForVendor?.uuidString ?? "-1"
-            self.systemVersion       = UIDevice.current.systemVersion
-            self.systemOS            = UIDevice.current.systemName
-            self.systemIdentifier    = UIDevice.current.systemIdentifier ?? "-1"
-            self.batteryLevel        = UIDevice.current.batteryLevel
-            self.batteryState        = UIDevice.current.batteryState.stringValue
-
-            // Disk and memory resources
-            self.diskDetails = .init()
-            self.memoryDetails = .init()
+            self.systemVersion    = UIDevice.current.systemVersion
+            self.systemOS         = UIDevice.current.systemName
+            self.systemIdentifier = UIDevice.current.systemIdentifier ?? "-1"
+            self.batteryLevel     = UIDevice.current.batteryLevel
+            self.batteryState     = UIDevice.current.batteryState.stringValue
         }
     }
 }
@@ -92,7 +101,7 @@ extension Event {
 
         public var diskDetails: DiskDetails
         public var memoryDetails: MemoryDetails
-        
+
         public init() {
             self.diskDetails = .init()
             self.memoryDetails = .init()
@@ -101,37 +110,3 @@ extension Event {
 }
 
 #endif
-
-extension Event.DeviceDetails {
-
-    public struct DiskDetails: Codable, Equatable {
-
-        public var storageRemaining: Int
-        public var storageTotal: Int
-        public var appContainerTotalKB: Int
-
-        public init() {
-            let volume = volumeSize
-            self.storageRemaining = volume?.available ?? -1
-            self.storageTotal = volume?.total ?? -1
-            let app = appContainerSizeKB
-            self.appContainerTotalKB = app ?? -1
-        }
-    }
-
-    public struct MemoryDetails: Codable, Equatable {
-
-        public var memoryFree:  Int
-        public var memoryUsed:  Int
-        public var memoryTotal: Int
-        public var memoryApp: Int
-
-        public init() {
-            let memory = vmMemoryCount
-            self.memoryFree  = memory?.free  ?? -1
-            self.memoryUsed  = memory?.used  ?? -1
-            self.memoryTotal = memory?.total ?? -1
-            self.memoryApp   = vmAppMemory   ?? -1
-        }
-    }
-}

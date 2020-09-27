@@ -59,3 +59,37 @@ extension Event {
         var userInfo: [String: String]? // TODO: Replace value type with anything codable
     }
 }
+
+extension Event.DeviceDetails {
+
+    public struct DiskDetails: Codable, Equatable {
+
+        public var storageRemaining: Int
+        public var storageTotal: Int
+        public var appContainerTotalKB: Int
+
+        public init() {
+            let volume = volumeSize
+            self.storageRemaining = volume?.available ?? -1
+            self.storageTotal = volume?.total ?? -1
+            let app = appContainerSizeKB
+            self.appContainerTotalKB = app ?? -1
+        }
+    }
+
+    public struct MemoryDetails: Codable, Equatable {
+
+        public var memoryFree:  Int
+        public var memoryUsed:  Int
+        public var memoryTotal: Int
+        public var memoryApp: Int
+
+        public init() {
+            let memory = vmMemoryCount
+            self.memoryFree  = memory?.free  ?? -1
+            self.memoryUsed  = memory?.used  ?? -1
+            self.memoryTotal = memory?.total ?? -1
+            self.memoryApp   = vmAppMemory   ?? -1
+        }
+    }
+}
