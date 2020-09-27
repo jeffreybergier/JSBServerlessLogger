@@ -28,42 +28,6 @@
 #if canImport(UIKit)
 import UIKit
 
-extension Event {
-    public struct DeviceDetails: Codable, Equatable {
-
-        public var identifierForVendor: String
-        public var hardwareDetails: HardwareDetails
-        public var diskDetails: DiskDetails
-        public var memoryDetails: MemoryDetails
-
-        public init() {
-            self.identifierForVendor = UIDevice.current.identifierForVendor?.uuidString ?? "-1"
-            self.hardwareDetails     = .init()
-            self.diskDetails         = .init()
-            self.memoryDetails       = .init()
-        }
-    }
-}
-
-extension Event.DeviceDetails {
-    public struct HardwareDetails: Codable, Equatable {
-
-        public var systemVersion: String
-        public var systemOS: String
-        public var systemIdentifier: String
-        public var batteryLevel: Float
-        public var batteryState: String
-
-        public init() {
-            self.systemVersion    = UIDevice.current.systemVersion
-            self.systemOS         = UIDevice.current.systemName
-            self.systemIdentifier = UIDevice.current.systemIdentifier ?? "-1"
-            self.batteryLevel     = UIDevice.current.batteryLevel
-            self.batteryState     = UIDevice.current.batteryState.stringValue
-        }
-    }
-}
-
 extension UIDevice.BatteryState {
     public var stringValue: String {
         switch self {
@@ -94,17 +58,23 @@ extension UIDevice {
     }
 }
 
-#else
+extension Event.DeviceDetails {
+    public struct HardwareDetails: Codable, Equatable {
 
-extension Event {
-    public struct DeviceDetails: Codable, Equatable {
-
-        public var diskDetails: DiskDetails
-        public var memoryDetails: MemoryDetails
+        public var identifierForVendor: String
+        public var systemVersion: String
+        public var systemOS: String
+        public var systemIdentifier: String
+        public var batteryLevel: Float
+        public var batteryState: String
 
         public init() {
-            self.diskDetails = .init()
-            self.memoryDetails = .init()
+            self.identifierForVendor = UIDevice.current.identifierForVendor?.uuidString ?? "-1"
+            self.systemVersion       = UIDevice.current.systemVersion
+            self.systemOS            = UIDevice.current.systemName
+            self.systemIdentifier    = UIDevice.current.systemIdentifier ?? "-1"
+            self.batteryLevel        = UIDevice.current.batteryLevel
+            self.batteryState        = UIDevice.current.batteryState.stringValue
         }
     }
 }

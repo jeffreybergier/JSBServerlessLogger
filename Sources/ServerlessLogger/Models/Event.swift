@@ -60,6 +60,21 @@ extension Event {
     }
 }
 
+extension Event {
+    public struct DeviceDetails: Codable, Equatable {
+
+        public var hardwareDetails: HardwareDetails
+        public var diskDetails: DiskDetails
+        public var memoryDetails: MemoryDetails
+
+        public init() {
+            self.hardwareDetails     = .init()
+            self.diskDetails         = .init()
+            self.memoryDetails       = .init()
+        }
+    }
+}
+
 extension Event.DeviceDetails {
 
     public struct DiskDetails: Codable, Equatable {
