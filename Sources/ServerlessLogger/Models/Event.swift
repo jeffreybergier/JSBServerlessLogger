@@ -82,32 +82,33 @@ extension Event.DeviceDetails {
 
     public struct DiskDetails: Codable, Equatable {
 
-        public var storageRemaining: Int
-        public var storageTotal: Int
-        public var appContainerTotalKB: Int
+        public var diskFreeMB: Int
+        public var diskTotalMB: Int
+        /// Size of the container for the main bundle
+        /// Does not include not any app group containers
+        public var appUsedKB: Int
 
         public init() {
-            let volume = volumeSize
-            self.storageRemaining = volume?.available ?? -1
-            self.storageTotal = volume?.total ?? -1
-            let app = appContainerSizeKB
-            self.appContainerTotalKB = app ?? -1
+            let volume = disk_rootSize
+            self.diskFreeMB  = (volume?.available ?? -1000000) / 1000000
+            self.diskTotalMB = (volume?.total     ?? -1000000) / 1000000
+            let app = disk_appContainerSize
+            self.appUsedKB   = (app ?? -1000) / 1000
         }
     }
 
     public struct MemoryDetails: Codable, Equatable {
 
-        public var memoryFree:  Int
-        public var memoryUsed:  Int
-        public var memoryTotal: Int
-        public var memoryApp: Int
+        public var systemFreeMB:  Int
+        public var systemTotalMB: Int
+        public var appUsedKB: Int
 
         public init() {
-            let memory = vmMemoryCount
-            self.memoryFree  = memory?.free  ?? -1
-            self.memoryUsed  = memory?.used  ?? -1
-            self.memoryTotal = memory?.total ?? -1
-            self.memoryApp   = vmAppMemory   ?? -1
+            let system = memory_systemSize
+            self.systemFreeMB  = (system?.free   ?? -1000000) / 1000000
+            self.systemTotalMB = (system?.total  ?? -1000000) / 1000000
+            let app = memory_appUsed
+            self.appUsedKB     = (app ?? -1000) / 1000
         }
     }
 }

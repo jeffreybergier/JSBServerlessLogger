@@ -48,19 +48,18 @@ class DeviceDetailsTests: XCTestCase {
         #endif
 
         // Disk Details
-        XCTAssertGreaterThan(lhs.diskDetails.storageRemaining, 0)
-        XCTAssertGreaterThan(lhs.diskDetails.storageTotal, 0)
+        XCTAssertGreaterThan(lhs.diskDetails.diskFreeMB, 0)
+        XCTAssertGreaterThan(lhs.diskDetails.diskTotalMB, 0)
         if IS_SANDBOXED {
-            XCTAssertGreaterThan(lhs.diskDetails.appContainerTotalKB, 0)
+            XCTAssertGreaterThan(lhs.diskDetails.appUsedKB, 0)
         } else {
-            XCTAssertEqual(lhs.diskDetails.appContainerTotalKB, -1)
+            XCTAssertEqual(lhs.diskDetails.appUsedKB, -1)
         }
 
         // Memory Details
-        XCTAssertGreaterThan(lhs.memoryDetails.memoryFree, 0)
-        XCTAssertGreaterThan(lhs.memoryDetails.memoryUsed, 0)
-        XCTAssertGreaterThan(lhs.memoryDetails.memoryTotal, 0)
-        XCTAssertGreaterThan(lhs.memoryDetails.memoryApp, 0)
+        XCTAssertGreaterThan(lhs.memoryDetails.systemFreeMB, 0)
+        XCTAssertGreaterThan(lhs.memoryDetails.systemTotalMB, 0)
+        XCTAssertGreaterThan(lhs.memoryDetails.appUsedKB, 0)
     }
 }
 

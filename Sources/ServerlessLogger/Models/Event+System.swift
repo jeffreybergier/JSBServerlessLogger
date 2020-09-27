@@ -28,17 +28,17 @@
 import Foundation
 import Darwin.malloc
 
-/// Returns size of app in memory in MB
-internal var vmAppMemory: Int? {
+/// Returns size of app in memory in bytes
+internal var memory_appUsed: Int? {
     var stats = malloc_statistics_t()
     malloc_zone_statistics(nil, &stats)
     let size = stats.size_allocated
     guard size > 0 else { return nil }
-    return size / 1000000
+    return size
 }
 
-/// Returns total memory statistics in MB
-internal var vmMemoryCount: (free: Int, used: Int, total: Int)? {
+/// Return sizes in bytes
+internal var memory_systemSize: (free: Int, total: Int)? {
     // Below code is from StackOverflow by Nico
     // https://stackoverflow.com/a/8540665
 
@@ -53,7 +53,7 @@ internal var vmMemoryCount: (free: Int, used: Int, total: Int)? {
     withUnsafeMutablePointer(to: &vm_stat) { vmStatPointer -> Void in
         vmStatPointer.withMemoryRebound(to: integer_t.self, capacity: Int(host_size)) {
             if (host_statistics(host_port, HOST_VM_INFO, $0, &host_size) != KERN_SUCCESS) {
-                NSLog("Error: Failed to fetch vm statistics")
+                NSDebugLog("Error: Failed to fetch vm statistics")
                 failed = true
             }
         }
@@ -61,28 +61,26 @@ internal var vmMemoryCount: (free: Int, used: Int, total: Int)? {
     guard !failed else { return nil }
 
     /* Stats in bytes */
-    let mem_used = Int64(vm_stat.active_count
-                         + vm_stat.inactive_count
-                         + vm_stat.wire_count)
-                         * Int64(pagesize)
-    let mem_free = Int64(vm_stat.free_count)
-                         * Int64(pagesize)
-    /* Stats in MBytes */
-    let mem_used_mb = Int(mem_used / 1000000)
-    let mem_free_mb = Int(mem_free / 1000000)
-    return (free: mem_free_mb, used: mem_used_mb, total: mem_used_mb + mem_free_mb)
+    let mem_used = Int(vm_stat.active_count
+                        + vm_stat.inactive_count
+                        + vm_stat.wire_count)
+                        * Int(pagesize)
+    let mem_free = Int(vm_stat.free_count)
+                        * Int(pagesize)
+    return (free: mem_free, total: mem_used + mem_free)
 }
 
-internal var volumeSize: (available: Int, total: Int)? {
+/// Returns sizes in bytes
+internal var disk_rootSize: (available: Int, total: Int)? {
     let fm = Foundation.FileManager.default
     let dir = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
     let resources = try? dir?.resourceValues(forKeys: [.volumeAvailableCapacityKey, .volumeTotalCapacityKey])
     guard let total = resources?.volumeTotalCapacity, let available = resources?.volumeAvailableCapacity else { return nil }
-    return (available: available / 1000000, total: total / 1000000)
+    return (available: available, total: total)
 }
 
-/// Returns size in KB
-internal var appContainerSizeKB: Int? {
+/// Returns size in bytes
+internal var disk_appContainerSize: Int? {
     // This only works as expected if we're sandboxed
     guard IS_SANDBOXED else { return nil }
     let fm = Foundation.FileManager.default
@@ -90,5 +88,5 @@ internal var appContainerSizeKB: Int? {
                  .first?
                  .deletingLastPathComponent()
     guard let dir = _dir, let size = try? fm.size(folder: dir) else { return nil }
-    return size / 1000
+    return size
 }
