@@ -73,20 +73,22 @@ internal var vmMemoryCount: (free: Int, used: Int, total: Int)? {
     return (free: mem_free_mb, used: mem_used_mb, total: mem_used_mb + mem_free_mb)
 }
 
-internal var diskResourceValues: URLResourceValues? {
-    let fm = FileManager.default
-    let dir = IS_TESTING
-        ? URL(string: "file:///")
-        : fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
-    return try? dir?.resourceValues(forKeys: [.volumeAvailableCapacityKey, .volumeTotalCapacityKey])
+internal var volumeSize: (available: Int, total: Int)? {
+    let fm = Foundation.FileManager.default
+    let dir = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+    let resources = try? dir?.resourceValues(forKeys: [.volumeAvailableCapacityKey, .volumeTotalCapacityKey])
+    guard let total = resources?.volumeTotalCapacity, let available = resources?.volumeAvailableCapacity else { return nil }
+    return (available: available / 1000000, total: total / 1000000)
 }
 
-internal var appContainerResourceValues: URLResourceValues? {
-    // Impossible to fake these URLResourceValue objects so it can't be tested
-    guard !IS_TESTING else { return nil }
-    let fm = FileManager.default
-    let dir = fm.urls(for: .documentDirectory, in: .userDomainMask)
-                .first?
-                .deletingLastPathComponent()
-    return try? dir?.resourceValues(forKeys: [.totalFileSizeKey])
+/// Returns size in KB
+internal var appContainerSizeKB: Int? {
+    // This only works as expected if we're sandboxed
+    guard IS_SANDBOXED else { return nil }
+    let fm = Foundation.FileManager.default
+    let _dir = fm.urls(for: .documentDirectory, in: .userDomainMask)
+                 .first?
+                 .deletingLastPathComponent()
+    guard let dir = _dir, let size = try? fm.size(folder: dir) else { return nil }
+    return size / 1000
 }

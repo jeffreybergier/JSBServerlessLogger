@@ -35,6 +35,46 @@ internal let IS_TESTING: Bool = {
     #endif
 }()
 
+internal let IS_SANDBOXED: Bool = {
+    #if !os(macOS)
+    return true
+    #else
+    // Refer to this to see how I got this code
+    // https://stackoverflow.com/questions/12177948/how-do-i-detect-if-my-app-is-sandboxed/47105177#comment71759807_42244464
+    // https://eclecticlight.co/2019/05/11/checking-your-apps-own-signature/
+    var staticCode: SecStaticCode!
+    let bundleURL = Bundle.main.bundleURL
+    guard SecStaticCodeCreateWithPath(bundleURL as CFURL, [], &staticCode) != 0 else {
+        return false
+    }
+    guard staticCode != nil else {
+        return false
+    }
+    guard SecStaticCodeCheckValidityWithErrors(staticCode,
+                                               SecCSFlags(rawValue: kSecCSBasicValidateOnly),
+                                               nil,
+                                               nil) != 0
+    else {
+        return false
+    }
+    var sandboxRequirement: SecRequirement?
+    guard SecRequirementCreateWithString("entitlement[\"com.apple.security.app-sandbox\"] exists" as CFString,
+                                         [],
+                                         &sandboxRequirement) == errSecSuccess
+    else {
+        return false
+    }
+    let codeCheckResult: OSStatus = SecStaticCodeCheckValidityWithErrors(staticCode,
+                                                                         SecCSFlags(rawValue: kSecCSBasicValidateOnly),
+                                                                         sandboxRequirement,
+                                                                         nil)
+    guard codeCheckResult == errSecSuccess else {
+        return false
+    }
+    return true
+    #endif
+}()
+
 internal func NSDebugLog(_ input: @autoclosure () -> String) {
     #if DEBUG
     NSLog(input())
