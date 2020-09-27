@@ -46,7 +46,8 @@ extension UIDevice.BatteryState {
 }
 
 extension UIDevice {
-    fileprivate var systemIdentifier: String? {
+    // Internal for testing only
+    internal var systemIdentifier: String? {
         var systemInfo = utsname()
         uname(&systemInfo)
         let machineMirror = Mirror(reflecting: systemInfo.machine)
