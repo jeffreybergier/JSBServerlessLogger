@@ -30,8 +30,9 @@ import Darwin.malloc
 
 /// Returns size of app in memory in bytes
 internal var memory_appUsed: Int? {
+    let zone = malloc_default_zone()
     var stats = malloc_statistics_t()
-    malloc_zone_statistics(nil, &stats)
+    malloc_zone_statistics(zone, &stats)
     let size = stats.size_allocated
     guard size > 0 else { return nil }
     return size
@@ -61,12 +62,9 @@ internal var memory_systemSize: (free: Int, total: Int)? {
     guard !failed else { return nil }
 
     /* Stats in bytes */
-    let mem_used = Int(vm_stat.active_count
-                        + vm_stat.inactive_count
-                        + vm_stat.wire_count)
+    let mem_used = Int(vm_stat.active_count + vm_stat.inactive_count + vm_stat.wire_count)
                         * Int(pagesize)
-    let mem_free = Int(vm_stat.free_count)
-                        * Int(pagesize)
+    let mem_free = Int(vm_stat.free_count) * Int(pagesize)
     return (free: mem_free, total: mem_used + mem_free)
 }
 
