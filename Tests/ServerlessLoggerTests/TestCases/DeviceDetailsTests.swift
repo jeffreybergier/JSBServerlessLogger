@@ -42,7 +42,7 @@ class DeviceDetailsTests: XCTestCase {
         XCTAssertEqual(lhs.hardwareDetails.identifierForVendor, UIDevice.current.identifierForVendor?.uuidString)
         XCTAssertEqual(lhs.hardwareDetails.systemVersion, UIDevice.current.systemVersion)
         XCTAssertEqual(lhs.hardwareDetails.systemOS, UIDevice.current.systemName)
-        XCTAssertEqual(lhs.hardwareDetails.systemIdentifier, UIDevice.current.systemIdentifier)
+        XCTAssertEqual(lhs.hardwareDetails.systemIdentifier, UIDevice.systemIdentifier)
         XCTAssertEqual(lhs.hardwareDetails.batteryLevel, UIDevice.current.batteryLevel)
         XCTAssertEqual(lhs.hardwareDetails.batteryState, UIDevice.current.batteryState.stringValue)
         #endif

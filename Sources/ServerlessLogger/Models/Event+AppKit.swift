@@ -38,7 +38,7 @@ extension Event.DeviceDetails {
         public init() {
             let pi = ProcessInfo.processInfo
             self.systemVersion = pi.operatingSystemVersionString
-            self.systemIdentifier = pi.systemIdentifier
+            self.systemIdentifier = ProcessInfo.systemIdentifier
         }
     }
 }
@@ -47,7 +47,7 @@ extension ProcessInfo {
     // internal for testing only
     /// Returns the MacBook(7,1) or similar
     /// Returns -1 if there was an error fetching this
-    var systemIdentifier: String {
+    internal static let systemIdentifier: String = {
         // Code from https://stackoverflow.com/a/25467259
         var size = 0
         sysctlbyname("hw.model", nil, &size, nil, 0)
@@ -55,7 +55,7 @@ extension ProcessInfo {
         var output = [CChar](repeating: 0, count: size)
         sysctlbyname("hw.model", &output, &size, nil, 0)
         return String(cString: output)
-    }
+    }()
 }
 
 #endif

@@ -48,7 +48,7 @@ extension UIDevice.BatteryState {
 extension UIDevice {
     // Internal for testing only
     /// Returns identifier in the format of `iPhone6,1` or `"-1"` if there was an error retrieving it.
-    internal var systemIdentifier: String {
+    internal static let systemIdentifier: String = {
         var systemInfo = utsname()
         uname(&systemInfo)
         let machineMirror = Mirror(reflecting: systemInfo.machine)
@@ -57,7 +57,7 @@ extension UIDevice {
             return identifier + String(UnicodeScalar(UInt8(value)))
         }
         return identifier.isEmpty ? "-1" : identifier
-    }
+    }()
 }
 
 extension Event.DeviceDetails {
@@ -71,10 +71,10 @@ extension Event.DeviceDetails {
         public var batteryState: String
 
         public init() {
+            self.systemIdentifier    = UIDevice.systemIdentifier
             self.identifierForVendor = UIDevice.current.identifierForVendor?.uuidString ?? "-1"
             self.systemVersion       = UIDevice.current.systemVersion
             self.systemOS            = UIDevice.current.systemName
-            self.systemIdentifier    = UIDevice.current.systemIdentifier
             self.batteryLevel        = UIDevice.current.batteryLevel
             self.batteryState        = UIDevice.current.batteryState.stringValue
         }
