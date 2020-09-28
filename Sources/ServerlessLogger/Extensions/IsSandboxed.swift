@@ -27,7 +27,8 @@
 
 import Foundation
 
-/// Untested code on macOS
+/// Untested code on macOS.
+/// iOS just returns `YES`
 internal let IS_SANDBOXED: Bool = {
     #if !os(macOS)
     return true
