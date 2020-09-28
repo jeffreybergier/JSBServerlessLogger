@@ -54,6 +54,7 @@ extension Logger {
         case fileExtension(URL)
         case fileSize(URL)
         case fileNotPresent(URL)
+        case directorySizing(URL)
 
         // MARK: Protocol Conformance
         public static let errorDomain: String = "JSBServerlessLoggerErrorDomain"
@@ -81,6 +82,8 @@ extension Logger {
                 return -1009
             case .fileNotPresent:
                 return -1010
+            case .directorySizing:
+                return -1011
             }
         }
         

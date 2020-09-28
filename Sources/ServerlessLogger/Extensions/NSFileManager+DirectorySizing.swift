@@ -30,10 +30,10 @@ import Foundation
 extension Foundation.FileManager {
     /// Iterates through every file and subfolder to get the total bytes
     /// returns: Size in bytes
-    internal func size(folder: URL) throws -> Int {
+    internal func size(directory: URL) throws -> Int {
         let properties: Set<URLResourceKey> = [.totalFileAllocatedSizeKey]
-        guard let enumerator = self.enumerator(at: folder, includingPropertiesForKeys: Array(properties)) else {
-            throw NSError() // provided URL was probably a file or doesn't exist
+        guard let enumerator = self.enumerator(at: directory, includingPropertiesForKeys: Array(properties)) else {
+            throw Logger.Error.directorySizing(directory)
         }
         var size: Int = 0
         var next: URL?
@@ -42,7 +42,7 @@ extension Foundation.FileManager {
         }
         progress()
         guard next != nil else {
-            throw NSError() // provided URL was probably a file or doesn't exist
+            throw Logger.Error.directorySizing(directory)
         }
         while next != nil {
             defer { progress() }

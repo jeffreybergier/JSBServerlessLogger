@@ -46,6 +46,6 @@ internal var disk_appContainerSize: Int? {
     let _dir = fm.urls(for: .documentDirectory, in: .userDomainMask)
                  .first?
                  .deletingLastPathComponent()
-    guard let dir = _dir, let size = try? fm.size(folder: dir) else { return nil }
+    guard let dir = _dir, let size = try? fm.size(directory: dir) else { return nil }
     return size
 }

@@ -54,6 +54,8 @@ extension Logger.Error {
             if case .fileSize = rhs { return true }
         case .fileNotPresent:
             if case .fileNotPresent = rhs { return true }
+        case .directorySizing:
+            if case .directorySizing = rhs { return true }
         }
         return false
     }
