@@ -27,19 +27,26 @@
 
 import Foundation
 
+internal let DiskSizeCache: Cacher<(rootFree: Int, rootTotal: Int, appSize: Int)?> = .init(timeout: 30, generator: {
+    let _root = disk_rootSize
+    let _app = disk_appContainerSize
+    guard let root = _root, let app = _app else { return nil }
+    return (rootFree: root.free, rootTotal: root.total, appSize: app)
+})
+
 // TODO: Add unit tests
 /// Returns sizes in bytes
-internal var disk_rootSize: (available: Int, total: Int)? {
+fileprivate var disk_rootSize: (free: Int, total: Int)? {
     let fm = Foundation.FileManager.default
     let dir = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
     let resources = try? dir?.resourceValues(forKeys: [.volumeAvailableCapacityKey, .volumeTotalCapacityKey])
-    guard let total = resources?.volumeTotalCapacity, let available = resources?.volumeAvailableCapacity else { return nil }
-    return (available: available, total: total)
+    guard let total = resources?.volumeTotalCapacity, let free = resources?.volumeAvailableCapacity else { return nil }
+    return (free: free, total: total)
 }
 
 // TODO: Add unit tests
 /// Returns size in bytes.
-internal var disk_appContainerSize: Int? {
+fileprivate var disk_appContainerSize: Int? {
     // This only works as expected if we're sandboxed
     guard IS_SANDBOXED else { return nil }
     let fm = Foundation.FileManager.default

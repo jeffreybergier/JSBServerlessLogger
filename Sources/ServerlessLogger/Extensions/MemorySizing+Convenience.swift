@@ -27,9 +27,16 @@
 
 import Darwin.malloc
 
+internal let MemorySizeCache: Cacher<(systemFree: Int, systemTotal: Int, appSize: Int)?> = .init(timeout: 5, generator: {
+    let _root = memory_systemSize
+    let _app = memory_appSize
+    guard let root = _root, let app = _app else { return nil }
+    return (systemFree: root.free, systemTotal: root.total, appSize: app)
+})
+
 // TODO: Add unit tests
 /// Returns size of app in memory in bytes
-internal var memory_appSize: Int? {
+private var memory_appSize: Int? {
     var stats = malloc_statistics_t()
     malloc_zone_statistics(nil, &stats)
     let size = stats.size_allocated
@@ -39,7 +46,7 @@ internal var memory_appSize: Int? {
 
 // TODO: Add unit tests
 /// Return sizes in bytes
-internal var memory_systemSize: (free: Int, total: Int)? {
+private var memory_systemSize: (free: Int, total: Int)? {
     // Below code is from StackOverflow by Nico
     // https://stackoverflow.com/a/8540665
 
