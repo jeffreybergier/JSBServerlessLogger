@@ -24,3 +24,28 @@
 //  SOFTWARE.
 //
 //
+
+import Foundation
+
+// TODO: Add unit tests
+/// Returns sizes in bytes
+internal var disk_rootSize: (available: Int, total: Int)? {
+    let fm = Foundation.FileManager.default
+    let dir = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+    let resources = try? dir?.resourceValues(forKeys: [.volumeAvailableCapacityKey, .volumeTotalCapacityKey])
+    guard let total = resources?.volumeTotalCapacity, let available = resources?.volumeAvailableCapacity else { return nil }
+    return (available: available, total: total)
+}
+
+// TODO: Add unit tests
+/// Returns size in bytes.
+internal var disk_appContainerSize: Int? {
+    // This only works as expected if we're sandboxed
+    guard IS_SANDBOXED else { return nil }
+    let fm = Foundation.FileManager.default
+    let _dir = fm.urls(for: .documentDirectory, in: .userDomainMask)
+                 .first?
+                 .deletingLastPathComponent()
+    guard let dir = _dir, let size = try? fm.size(folder: dir) else { return nil }
+    return size
+}

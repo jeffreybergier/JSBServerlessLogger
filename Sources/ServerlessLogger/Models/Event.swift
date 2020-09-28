@@ -107,7 +107,7 @@ extension Event.DeviceDetails {
             let system = memory_systemSize
             self.systemFreeMB  = (system?.free   ?? -1000000) / 1000000
             self.systemTotalMB = (system?.total  ?? -1000000) / 1000000
-            let app = memory_appUsed
+            let app = memory_appSize
             self.appUsedKB     = (app ?? -1000) / 1000
         }
     }
