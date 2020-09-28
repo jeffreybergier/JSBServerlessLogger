@@ -30,9 +30,8 @@ import Darwin.malloc
 
 /// Returns size of app in memory in bytes
 internal var memory_appUsed: Int? {
-    let zone = malloc_default_zone()
     var stats = malloc_statistics_t()
-    malloc_zone_statistics(zone, &stats)
+    malloc_zone_statistics(nil, &stats)
     let size = stats.size_allocated
     guard size > 0 else { return nil }
     return size
