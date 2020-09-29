@@ -27,11 +27,10 @@
 
 import Darwin.malloc
 
-internal let MemorySizeCache: Cacher<(systemFree: Int, systemTotal: Int, appSize: Int)?> = .init(timeout: 5, generator: {
-    let _root = memory_systemSize
-    let _app = memory_appSize
-    guard let root = _root, let app = _app else { return nil }
-    return (systemFree: root.free, systemTotal: root.total, appSize: app)
+internal let MemorySizeCache: Cacher<(systemFree: Int?, systemTotal: Int?, appSize: Int?)> = .init(timeout: 5, generator: {
+    let root = memory_systemSize
+    let app = memory_appSize
+    return (systemFree: root?.free, systemTotal: root?.total, appSize: app)
 })
 
 // TODO: Add unit tests

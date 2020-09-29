@@ -90,9 +90,9 @@ extension Event.DeviceDetails {
 
         public init() {
             let value = DiskSizeCache.value
-            self.diskFreeMB  = (value?.rootFree  ?? -1000000) / 1000000
-            self.diskTotalMB = (value?.rootTotal ?? -1000000) / 1000000
-            self.appUsedKB   = (value?.appSize   ?? -1000)    / 1000
+            self.diskFreeMB  = (value.rootFree  ?? -1000000) / 1000000
+            self.diskTotalMB = (value.rootTotal ?? -1000000) / 1000000
+            self.appUsedKB   = (value.appSize   ?? -1000)    / 1000
         }
     }
 
@@ -104,9 +104,9 @@ extension Event.DeviceDetails {
 
         public init() {
             let value = MemorySizeCache.value
-            self.systemFreeMB  = (value?.systemFree  ?? -1000000) / 1000000
-            self.systemTotalMB = (value?.systemTotal ?? -1000000) / 1000000
-            self.appUsedKB     = (value?.appSize     ?? -1000)    / 1000
+            self.systemFreeMB  = (value.systemFree  ?? -1000000) / 1000000
+            self.systemTotalMB = (value.systemTotal ?? -1000000) / 1000000
+            self.appUsedKB     = (value.appSize     ?? -1000)    / 1000
         }
     }
 }

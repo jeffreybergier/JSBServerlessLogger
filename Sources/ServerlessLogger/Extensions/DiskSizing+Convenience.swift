@@ -27,11 +27,10 @@
 
 import Foundation
 
-internal let DiskSizeCache: Cacher<(rootFree: Int, rootTotal: Int, appSize: Int)?> = .init(timeout: 30, generator: {
-    let _root = disk_rootSize
-    let _app = disk_appContainerSize
-    guard let root = _root, let app = _app else { return nil }
-    return (rootFree: root.free, rootTotal: root.total, appSize: app)
+internal let DiskSizeCache: Cacher<(rootFree: Int?, rootTotal: Int?, appSize: Int?)> = .init(timeout: 30, generator: {
+    let root = disk_rootSize
+    let app = disk_appContainerSize
+    return (rootFree: root?.free, rootTotal: root?.total, appSize: app)
 })
 
 // TODO: Add unit tests
