@@ -64,6 +64,8 @@ extension Event.DeviceDetails {
     public struct HardwareDetails: Codable, Equatable {
 
         public var identifierForVendor: String
+        public var appVersion: String
+        public var appBuild: String
         public var systemVersion: String
         public var systemOS: String
         public var systemIdentifier: String
@@ -71,10 +73,12 @@ extension Event.DeviceDetails {
         public var batteryState: String
 
         public init() {
-            self.systemIdentifier    = UIDevice.systemIdentifier
             self.identifierForVendor = UIDevice.current.identifierForVendor?.uuidString ?? "-1"
+            self.appVersion          = Bundle.main.version
+            self.appBuild            = Bundle.main.build
             self.systemVersion       = UIDevice.current.systemVersion
             self.systemOS            = UIDevice.current.systemName
+            self.systemIdentifier    = UIDevice.systemIdentifier
             self.batteryLevel        = UIDevice.current.batteryLevel
             self.batteryState        = UIDevice.current.batteryState.stringValue
         }

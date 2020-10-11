@@ -31,13 +31,17 @@ import AppKit
 extension Event.DeviceDetails {
     public struct HardwareDetails: Codable, Equatable {
 
+        public var appVersion: String
+        public var appBuild: String
         public var systemVersion: String
         public var systemOS: String = "macOS"
         public var systemIdentifier: String
 
         public init() {
             let pi = ProcessInfo.processInfo
-            self.systemVersion = pi.operatingSystemVersionString
+            self.appVersion       = Bundle.main.version
+            self.appBuild         = Bundle.main.build
+            self.systemVersion    = pi.operatingSystemVersionString
             self.systemIdentifier = ProcessInfo.systemIdentifier
         }
     }
