@@ -25,10 +25,10 @@
 //
 //
 
-#if canImport(UIKit)
-import UIKit
+#if os(watchOS)
+import WatchKit
 
-extension UIDevice.BatteryState {
+extension WKInterfaceDeviceBatteryState {
     public var stringValue: String {
         switch self {
         case .unknown:
@@ -45,7 +45,7 @@ extension UIDevice.BatteryState {
     }
 }
 
-extension UIDevice {
+extension WKInterfaceDevice {
     // Internal for testing only
     /// Returns identifier in the format of `iPhone6,1` or `"-1"` if there was an error retrieving it.
     internal static let systemIdentifier: String = {
@@ -73,14 +73,14 @@ extension Event.DeviceDetails {
         public var batteryState: String
 
         public init() {
-            self.identifierForVendor = UIDevice.current.identifierForVendor?.uuidString ?? "-1"
+            self.identifierForVendor = WKInterfaceDevice.current().identifierForVendor?.uuidString ?? "-1"
             self.appVersion          = Bundle.main.version
             self.appBuild            = Bundle.main.build
-            self.systemVersion       = UIDevice.current.systemVersion
-            self.systemOS            = UIDevice.current.systemName
-            self.systemIdentifier    = UIDevice.systemIdentifier
-            self.batteryLevel        = UIDevice.current.batteryLevel
-            self.batteryState        = UIDevice.current.batteryState.stringValue
+            self.systemVersion       = WKInterfaceDevice.current().systemVersion
+            self.systemOS            = WKInterfaceDevice.current().systemName
+            self.systemIdentifier    = WKInterfaceDevice.systemIdentifier
+            self.batteryLevel        = WKInterfaceDevice.current().batteryLevel
+            self.batteryState        = WKInterfaceDevice.current().batteryState.stringValue
         }
     }
 }

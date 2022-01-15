@@ -1,11 +1,11 @@
-// swift-tools-version:5.2
+// swift-tools-version:5.5
 
 import PackageDescription
 
 let package = Package(
     name: "ServerlessLogger",
     platforms: [
-        .macOS(.v10_12),.iOS(.v10),
+        .macOS(.v10_12),.iOS(.v13), .watchOS("6.2"),
     ],
     products: [
         .library(
