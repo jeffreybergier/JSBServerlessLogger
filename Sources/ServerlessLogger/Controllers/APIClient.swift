@@ -27,7 +27,7 @@
 
 import Foundation
 
-public protocol ServerlessLoggerAPIClientDelegate: class {
+public protocol ServerlessLoggerAPIClientDelegate: AnyObject {
     func didSend(payload: URL)
     func didFailToSend(payload: URL)
 }
