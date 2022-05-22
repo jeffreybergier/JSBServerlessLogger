@@ -28,6 +28,8 @@
 import XCTest
 @testable import ServerlessLogger
 
+@available(tvOS 13.0, *)
+@available(iOS 13.0, *)
 class HMACMock1Tests: AsyncDeprecateTestCase {
 
     let mock: MockProtocol.Type = Mock1.self

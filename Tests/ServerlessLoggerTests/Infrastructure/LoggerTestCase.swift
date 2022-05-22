@@ -28,6 +28,7 @@
 import XCTest
 @testable import ServerlessLogger
 
+@available(iOS 13.0, tvOS 13.0, *)
 class LoggerTestCase: AsyncDeprecateTestCase {
 
     var fm: FileManagerClosureStub!

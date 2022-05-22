@@ -28,6 +28,7 @@
 #if os(watchOS)
 import WatchKit
 
+@available(watchOS 4.0, *)
 extension WKInterfaceDeviceBatteryState {
     public var stringValue: String {
         switch self {
@@ -73,14 +74,25 @@ extension Event.DeviceDetails {
         public var batteryState: String
 
         public init() {
-            self.identifierForVendor = WKInterfaceDevice.current().identifierForVendor?.uuidString ?? "-1"
             self.appVersion          = Bundle.main.version
             self.appBuild            = Bundle.main.build
             self.systemVersion       = WKInterfaceDevice.current().systemVersion
             self.systemOS            = WKInterfaceDevice.current().systemName
             self.systemIdentifier    = WKInterfaceDevice.systemIdentifier
-            self.batteryLevel        = WKInterfaceDevice.current().batteryLevel
-            self.batteryState        = WKInterfaceDevice.current().batteryState.stringValue
+            
+            if #available(watchOS 6.2, *) {
+                self.identifierForVendor = WKInterfaceDevice.current().identifierForVendor?.uuidString ?? "-1"
+            } else {
+                self.identifierForVendor = "-1"
+            }
+            
+            if #available(watchOS 4.0, *) {
+                self.batteryLevel        = WKInterfaceDevice.current().batteryLevel
+                self.batteryState        = WKInterfaceDevice.current().batteryState.stringValue
+            } else {
+                self.batteryLevel = 1
+                self.batteryState = "-1"
+            }
         }
     }
 }

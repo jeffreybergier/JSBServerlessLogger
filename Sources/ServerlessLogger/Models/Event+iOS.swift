@@ -25,8 +25,11 @@
 //
 //
 
-#if os(iOS)
+#if canImport(UIKit)
 import UIKit
+#endif
+
+#if os(iOS)
 
 extension UIDevice.BatteryState {
     public var stringValue: String {
@@ -44,7 +47,9 @@ extension UIDevice.BatteryState {
         }
     }
 }
+#endif
 
+#if os(iOS) || os(tvOS)
 extension UIDevice {
     // Internal for testing only
     /// Returns identifier in the format of `iPhone6,1` or `"-1"` if there was an error retrieving it.
@@ -69,8 +74,10 @@ extension Event.DeviceDetails {
         public var systemVersion: String
         public var systemOS: String
         public var systemIdentifier: String
+        #if os(iOS)
         public var batteryLevel: Float
         public var batteryState: String
+        #endif
 
         public init() {
             self.identifierForVendor = UIDevice.current.identifierForVendor?.uuidString ?? "-1"
@@ -79,8 +86,10 @@ extension Event.DeviceDetails {
             self.systemVersion       = UIDevice.current.systemVersion
             self.systemOS            = UIDevice.current.systemName
             self.systemIdentifier    = UIDevice.systemIdentifier
+            #if os(iOS)
             self.batteryLevel        = UIDevice.current.batteryLevel
             self.batteryState        = UIDevice.current.batteryState.stringValue
+            #endif
         }
     }
 }

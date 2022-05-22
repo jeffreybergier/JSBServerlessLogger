@@ -44,13 +44,15 @@ class DeviceDetailsTests: XCTestCase {
         XCTAssertEqual(lhs.hardwareDetails.systemVersion, ProcessInfo.processInfo.operatingSystemVersionString)
         XCTAssertEqual(lhs.hardwareDetails.systemIdentifier, sysctl_output().components(separatedBy: " ").last!)
         XCTAssertEqual(lhs.hardwareDetails.systemOS, "macOS")
-        #elseif os(iOS)
+        #elseif os(iOS) || os(tvOS)
         XCTAssertEqual(lhs.hardwareDetails.identifierForVendor, UIDevice.current.identifierForVendor?.uuidString)
         XCTAssertEqual(lhs.hardwareDetails.systemVersion, UIDevice.current.systemVersion)
         XCTAssertEqual(lhs.hardwareDetails.systemOS, UIDevice.current.systemName)
         XCTAssertEqual(lhs.hardwareDetails.systemIdentifier, UIDevice.systemIdentifier)
-        XCTAssertEqual(lhs.hardwareDetails.batteryLevel, UIDevice.current.batteryLevel)
-        XCTAssertEqual(lhs.hardwareDetails.batteryState, UIDevice.current.batteryState.stringValue)
+            #if os(iOS)
+            XCTAssertEqual(lhs.hardwareDetails.batteryLevel, UIDevice.current.batteryLevel)
+            XCTAssertEqual(lhs.hardwareDetails.batteryState, UIDevice.current.batteryState.stringValue)
+            #endif
         #else
         XCTAssertEqual(lhs.hardwareDetails.identifierForVendor, WKInterfaceDevice.current().identifierForVendor?.uuidString)
         XCTAssertEqual(lhs.hardwareDetails.systemVersion, WKInterfaceDevice.current().systemVersion)

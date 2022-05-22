@@ -30,6 +30,7 @@ import Foundation
 import ServerlessLogger
 
 
+@available(iOS 13.0, tvOS 13.0, *)
 protocol MockProtocol {
     typealias OnDisk = (url: URL, data: Data)
     static var onDisk: [OnDisk] { get }
@@ -39,6 +40,7 @@ protocol MockProtocol {
     static var configuration: ServerlessLoggerConfigurationProtocol { get set }
 }
 
+@available(iOS 13.0, tvOS 13.0, *)
 enum Mock1: MockProtocol {
     static let onDisk: [OnDisk] = [
         (URL(string: "file:///baseDir/UnitTests/Mock1/Inbox/567890.json")!, "This is some data from the disk".data(using: .utf8)!)
@@ -70,6 +72,7 @@ enum Mock1: MockProtocol {
     }()
 }
 
+@available(iOS 13.0, tvOS 13.0, *)
 enum Mock2: MockProtocol {
     static let onDisk: [OnDisk] = [
         (URL(string: "file:///baseDir/UnitTests/Mock2/Inbox/12345.json")!, "This is some data from the disk".data(using: .utf8)!)
@@ -100,6 +103,7 @@ enum Mock2: MockProtocol {
     }()
 }
 
+@available(iOS 13.0, tvOS 13.0, *)
 enum EndToEndMock1: MockProtocol {
     static let remoteURL = URLComponents(string: { () -> String in fatalError("Put your endpoint here") }())!
     static let symmetricKey = SymmetricKey(data: Data(base64Encoded: { () -> String in fatalError("Put your secret here") }())!)
