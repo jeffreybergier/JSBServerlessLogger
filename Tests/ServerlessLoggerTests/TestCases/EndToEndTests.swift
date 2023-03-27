@@ -53,7 +53,11 @@ class EndToEndTests: AsyncDeprecateTestCase {
         self.success.success = { _, _ in
             wait(nil)
         }
-        self.log.error(NSError(domain: "JSBServerlessLoggingErrorDomain", code: -4444, userInfo: nil))
+        for idx in 4000...4005 {
+            DispatchQueue(label: "\(idx)", qos: .background).async {
+                self.log.error(NSError(domain: "JSBServerlessLoggingError\(idx)Domain", code: idx * -1, userInfo: nil))
+            }
+        }
         self.wait(for: .superLong)
     }
 

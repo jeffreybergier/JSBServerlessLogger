@@ -28,6 +28,7 @@
 import XCTest
 import ServerlessLogger
 
+@available(iOS 13.0, tvOS 13.0, *)
 class APIClientMock1Tests: LoggerTestCase {
 
     let mock: MockProtocol.Type = Mock1.self
@@ -60,6 +61,7 @@ class APIClientMock1Tests: LoggerTestCase {
     }
 }
 
+@available(iOS 13.0, tvOS 13.0, *)
 class APIClientMock2Tests: LoggerTestCase {
 
     let mock: MockProtocol.Type = Mock2.self
@@ -109,6 +111,7 @@ fileprivate class ClientDelegateStub: ServerlessLoggerAPIClientDelegate {
     }
 }
 
+@available(iOS 13.0, tvOS 13.0, *)
 class APIClientSessionDelegateTests: LoggerTestCase {
 
     let mock: MockProtocol.Type = Mock1.self

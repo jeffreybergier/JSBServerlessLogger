@@ -25,6 +25,12 @@
 //
 //
 
+#if canImport(UIKit)
+import UIKit
+#endif
+#if canImport(WatchKit)
+import WatchKit
+#endif
 import XCTest
 @testable import ServerlessLogger
 
@@ -38,13 +44,22 @@ class DeviceDetailsTests: XCTestCase {
         XCTAssertEqual(lhs.hardwareDetails.systemVersion, ProcessInfo.processInfo.operatingSystemVersionString)
         XCTAssertEqual(lhs.hardwareDetails.systemIdentifier, sysctl_output().components(separatedBy: " ").last!)
         XCTAssertEqual(lhs.hardwareDetails.systemOS, "macOS")
-        #else
+        #elseif os(iOS) || os(tvOS)
         XCTAssertEqual(lhs.hardwareDetails.identifierForVendor, UIDevice.current.identifierForVendor?.uuidString)
         XCTAssertEqual(lhs.hardwareDetails.systemVersion, UIDevice.current.systemVersion)
         XCTAssertEqual(lhs.hardwareDetails.systemOS, UIDevice.current.systemName)
         XCTAssertEqual(lhs.hardwareDetails.systemIdentifier, UIDevice.systemIdentifier)
-        XCTAssertEqual(lhs.hardwareDetails.batteryLevel, UIDevice.current.batteryLevel)
-        XCTAssertEqual(lhs.hardwareDetails.batteryState, UIDevice.current.batteryState.stringValue)
+            #if os(iOS)
+            XCTAssertEqual(lhs.hardwareDetails.batteryLevel, UIDevice.current.batteryLevel)
+            XCTAssertEqual(lhs.hardwareDetails.batteryState, UIDevice.current.batteryState.stringValue)
+            #endif
+        #else
+        XCTAssertEqual(lhs.hardwareDetails.identifierForVendor, WKInterfaceDevice.current().identifierForVendor?.uuidString)
+        XCTAssertEqual(lhs.hardwareDetails.systemVersion, WKInterfaceDevice.current().systemVersion)
+        XCTAssertEqual(lhs.hardwareDetails.systemOS, WKInterfaceDevice.current().systemName)
+        XCTAssertEqual(lhs.hardwareDetails.systemIdentifier, WKInterfaceDevice.systemIdentifier)
+        XCTAssertEqual(lhs.hardwareDetails.batteryLevel, WKInterfaceDevice.current().batteryLevel)
+        XCTAssertEqual(lhs.hardwareDetails.batteryState, WKInterfaceDevice.current().batteryState.stringValue)
         #endif
 
         // Disk Details

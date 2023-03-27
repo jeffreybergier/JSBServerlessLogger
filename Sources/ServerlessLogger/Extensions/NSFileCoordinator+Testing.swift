@@ -29,7 +29,7 @@ import Foundation
 
 #if DEBUG
 
-internal protocol NSFileCoordinatorProtocol: class {
+internal protocol NSFileCoordinatorProtocol: AnyObject {
     static func addFilePresenter(_ filePresenter: NSFilePresenter)
     func coordinate(writingItemAt: URL, options: Foundation.NSFileCoordinator.WritingOptions, writingItemAt: URL, options: Foundation.NSFileCoordinator.WritingOptions, error: NSErrorPointer, byAccessor: (URL, URL) -> Void)
     func coordinateMoving(from: URL, to: URL, accessor: (URL, URL) throws -> Void) throws

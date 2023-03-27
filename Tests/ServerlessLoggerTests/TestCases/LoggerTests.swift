@@ -28,6 +28,7 @@
 import XCTest
 @testable import ServerlessLogger
 
+@available(iOS 13.0, tvOS 13.0, *)
 class LoggerMock1Tests: LoggerTestCase {
 
     let mock: MockProtocol.Type = Mock1.self
@@ -89,6 +90,7 @@ class LoggerMock1Tests: LoggerTestCase {
     }
 }
 
+@available(iOS 13.0, tvOS 13.0, *)
 class LoggerMock2Tests: LoggerTestCase {
 
     let mock: MockProtocol.Type = Mock2.self

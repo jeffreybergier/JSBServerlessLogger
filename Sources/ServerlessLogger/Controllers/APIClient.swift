@@ -27,7 +27,7 @@
 
 import Foundation
 
-public protocol ServerlessLoggerAPIClientDelegate: class {
+public protocol ServerlessLoggerAPIClientDelegate: AnyObject {
     func didSend(payload: URL)
     func didFailToSend(payload: URL)
 }
@@ -68,7 +68,9 @@ extension Logger  {
             }
             sessionConfiguration.allowsCellularAccess = true
             sessionConfiguration.isDiscretionary = true
-            sessionConfiguration.shouldUseExtendedBackgroundIdleMode = true
+            if #available(macOS 10.11, *) {
+                sessionConfiguration.shouldUseExtendedBackgroundIdleMode = true
+            }
             
             let sessionDelegate = sessionDelegate ?? SessionDelegate(configuration: configuration,
                                                                      delegate: clientDelegate)

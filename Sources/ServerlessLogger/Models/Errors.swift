@@ -27,13 +27,13 @@
 
 import Foundation
 
-public protocol ServerlessLoggerErrorDelegate: class {
+public protocol ServerlessLoggerErrorDelegate: AnyObject {
     func logger(with configuration: ServerlessLoggerConfigurationProtocol,
                 produced error: Logger.Error)
 }
 
 #if DEBUG
-public protocol ServerlessLoggerSuccessDelegate: class {
+public protocol ServerlessLoggerSuccessDelegate: AnyObject {
     func logger(with configuration: ServerlessLoggerConfigurationProtocol,
                 successfullySent: URL)
 }
