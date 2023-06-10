@@ -5,7 +5,7 @@ import PackageDescription
 let package = Package(
     name: "ServerlessLogger",
     platforms: [
-        .macOS(.v10_12), .iOS(.v10), .watchOS(.v3), .tvOS(.v10),
+        .macOS(.v10_12), .iOS(.v10), .watchOS(.v5), .tvOS(.v10),
     ],
     products: [
         .library(
